@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, Alert, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Star, Pencil, Trash2 } from 'lucide-react-native';
 
 import colors from '../constants/colors';
@@ -23,6 +24,7 @@ const InfoRow = ({ label, value }) => (
 const MediaDetailsScreen = ({ navigation, route }) => {
   const { id } = route.params;
   const { items, edit, remove } = useMedia();
+  const insets = useSafeAreaInsets();
   const media = useMemo(() => items.find((item) => item.id === id), [items, id]);
 
   if (!media) {
@@ -69,7 +71,7 @@ const MediaDetailsScreen = ({ navigation, route }) => {
   const hasRating = media.rating !== null && media.rating !== undefined;
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: spacing['4xl'] + insets.bottom }]}>
       <View style={styles.titleBlock}>
         <Text style={styles.title}>{media.title}</Text>
         <StatusBadge status={media.status} />

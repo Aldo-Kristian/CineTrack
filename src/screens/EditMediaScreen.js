@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, ScrollView, Alert, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import colors from '../constants/colors';
 import spacing from '../constants/spacing';
@@ -11,6 +12,7 @@ import EmptyState from '../components/EmptyState';
 const EditMediaScreen = ({ navigation, route }) => {
   const { id } = route.params;
   const { items, edit } = useMedia();
+  const insets = useSafeAreaInsets();
   const media = useMemo(() => items.find((item) => item.id === id), [items, id]);
 
   const scrollRef = useRef(null);
@@ -74,7 +76,7 @@ const EditMediaScreen = ({ navigation, route }) => {
     <ScrollView
       ref={scrollRef}
       style={styles.screen}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingBottom: spacing['4xl'] + insets.bottom }]}
       keyboardShouldPersistTaps="handled"
     >
       <MediaForm

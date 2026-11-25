@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Modal,
   Pressable,
   FlatList,
+  Keyboard,
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
@@ -18,11 +19,18 @@ import spacing from '../constants/spacing';
 import { getYearOptions } from '../constants/years';
 
 const ITEM_HEIGHT = 52;
+const PANEL_MAX_HEIGHT = 380;
+const PANEL_MIN_HEIGHT = 240;
+const GAP = 6;
 
 const YearPicker = ({ value, onChange, hasError = false }) => {
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState('');
-  const { height } = useWindowDimensions();
+  const [anchor, setAnchor] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  const fieldRef = useRef(null);
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
   const years = useMemo(() => getYearOptions(), []);
@@ -43,9 +51,38 @@ const YearPicker = ({ value, onChange, hasError = false }) => {
     return [...startsWith, ...contains];
   }, [years, query]);
 
+  // Pantau keyboard supaya panel tidak tertutup.
+  useEffect(() => {
+    if (!visible) {
+      setKeyboardHeight(0);
+      return undefined;
+    }
+
+    const showSub = Keyboard.addListener('keyboardDidShow', (event) =>
+      setKeyboardHeight(event.endCoordinates?.height ?? 0)
+    );
+    const hideSub = Keyboard.addListener('keyboardDidHide', () =>
+      setKeyboardHeight(0)
+    );
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [visible]);
+
+  // Ukur posisi field di layar, lalu buka panel tepat di bawahnya.
   const open = () => {
     setQuery('');
-    setVisible(true);
+
+    if (fieldRef.current?.measureInWindow) {
+      fieldRef.current.measureInWindow((x, y, width, height) => {
+        setAnchor({ x, y, width, height });
+        setVisible(true);
+      });
+    } else {
+      setVisible(true);
+    }
   };
 
   const close = () => setVisible(false);
@@ -63,9 +100,23 @@ const YearPicker = ({ value, onChange, hasError = false }) => {
   // Hanya dipakai saat FlatList pertama kali muncul (query masih kosong).
   const initialIndex = Math.max(0, years.indexOf(String(value ?? '')));
 
+  // Posisi panel: di bawah field, dibatasi agar tidak keluar layar / tertutup keyboard.
+  const panelLeft = anchor.width ? anchor.x : spacing.lg;
+  const panelWidth = anchor.width || windowWidth - spacing.lg * 2;
+  const preferredTop = anchor.y + anchor.height + GAP;
+  const available = windowHeight - keyboardHeight - preferredTop - GAP;
+  const panelHeight = Math.min(
+    PANEL_MAX_HEIGHT,
+    Math.max(PANEL_MIN_HEIGHT, available)
+  );
+  const maxTop = windowHeight - keyboardHeight - panelHeight - GAP;
+  const panelTop = Math.max(insets.top + GAP, Math.min(preferredTop, maxTop));
+
   return (
     <>
       <Pressable
+        ref={fieldRef}
+        collapsable={false}
         style={[styles.field, hasError && styles.fieldError]}
         onPress={open}
         accessibilityRole="button"
@@ -83,6 +134,7 @@ const YearPicker = ({ value, onChange, hasError = false }) => {
         transparent
         animationType="fade"
         statusBarTranslucent
+        navigationBarTranslucent
         onRequestClose={close}
       >
         <View style={styles.overlay}>
@@ -91,7 +143,12 @@ const YearPicker = ({ value, onChange, hasError = false }) => {
           <View
             style={[
               styles.panel,
-              { height: height * 0.5, marginTop: insets.top + spacing['2xl'] },
+              {
+                top: panelTop,
+                left: panelLeft,
+                width: panelWidth,
+                height: panelHeight,
+              },
             ]}
           >
             <View style={styles.panelHeader}>
@@ -198,22 +255,22 @@ const styles = StyleSheet.create({
 
   overlay: {
     flex: 1,
-    justifyContent: 'flex-start',
-    paddingHorizontal: spacing.lg,
   },
 
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
 
   panel: {
+    position: 'absolute',
     backgroundColor: colors.surface,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.lg,
-    gap: spacing.md,
+    padding: spacing.md,
+    gap: spacing.sm,
+    elevation: 8,
   },
 
   panelHeader: {

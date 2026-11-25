@@ -1,35 +1,36 @@
 {
-    "expo":  {
-                 "name":  "CineTrack",
-                 "slug":  "CineTrack",
-                 "version":  "1.0.0",
-                 "orientation":  "portrait",
-                 "icon":  "./assets/icon.png",
-                 "userInterfaceStyle":  "dark",
-                 "ios":  {
-                             "supportsTablet":  true
-                         },
-                 "android":  {
-                                 "adaptiveIcon":  {
-                                                      "backgroundColor":  "#141414",
-                                                      "foregroundImage":  "./assets/android-icon-foreground.png",
-                                                      "backgroundImage":  "./assets/android-icon-background.png",
-                                                      "monochromeImage":  "./assets/android-icon-monochrome.png"
-                                                  },
-                                 "package":  "com.cinetrack.app"
-                             },
-                 "web":  {
-                             "favicon":  "./assets/favicon.png"
-                         },
-                 "plugins":  [
-                                 "expo-sqlite"
-                             ],
-                 "extra":  {
-                               "eas":  {
-                                           "projectId":  "2eb3e656-4376-4521-905d-bb3aa14fdb21"
-                                       }
-                           },
-                 "owner":  "aldo-kristian",
-                 "backgroundColor":  "#141414"
-             }
+  "expo": {
+    "name": "CineTrack",
+    "slug": "CineTrack",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#141414",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.cinetrack.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-sharing"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2eb3e656-4376-4521-905d-bb3aa14fdb21"
+      }
+    },
+    "owner": "aldo-kristian",
+    "backgroundColor": "#141414"
+  }
 }

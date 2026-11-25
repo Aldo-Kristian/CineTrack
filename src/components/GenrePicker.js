@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   Modal,
   Pressable,
   ScrollView,
+  Animated,
+  Easing,
+  PanResponder,
+  Dimensions,
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
@@ -22,10 +26,23 @@ import {
 import GenreChip from './GenreChip';
 import GenreList from './GenreList';
 
+const SLIDE_DISTANCE = Dimensions.get('screen').height;
+const DISMISS_DISTANCE = 90;
+const DISMISS_VELOCITY = 0.9;
+
 const GenrePicker = ({ value, onChange }) => {
   const [visible, setVisible] = useState(false);
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+
+  const translateY = useRef(new Animated.Value(SLIDE_DISTANCE)).current;
+  const isClosing = useRef(false);
+
+  const backdropOpacity = translateY.interpolate({
+    inputRange: [0, SLIDE_DISTANCE],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
 
   const selected = parseGenres(value);
 
@@ -45,13 +62,77 @@ const GenrePicker = ({ value, onChange }) => {
   };
 
   const clearAll = () => onChange('');
-  const close = () => setVisible(false);
+
+  const open = () => {
+    isClosing.current = false;
+    translateY.setValue(SLIDE_DISTANCE);
+    setVisible(true);
+  };
+
+  // Slide ke bawah dulu, baru Modal dilepas.
+  const close = () => {
+    if (isClosing.current) {
+      return;
+    }
+
+    isClosing.current = true;
+
+    Animated.timing(translateY, {
+      toValue: SLIDE_DISTANCE,
+      duration: 200,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => setVisible(false));
+  };
+
+  // Animasi masuk setiap kali Modal tampil.
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    Animated.timing(translateY, {
+      toValue: 0,
+      duration: 240,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [visible, translateY]);
+
+  // Geser handle / judul ke bawah untuk menutup sheet.
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 4,
+      onPanResponderMove: (_, gesture) => {
+        if (gesture.dy > 0) {
+          translateY.setValue(gesture.dy);
+        }
+      },
+      onPanResponderRelease: (_, gesture) => {
+        if (gesture.dy > DISMISS_DISTANCE || gesture.vy > DISMISS_VELOCITY) {
+          close();
+        } else {
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+      },
+    })
+  ).current;
 
   return (
     <>
       <Pressable
         style={styles.field}
-        onPress={() => setVisible(true)}
+        onPress={open}
         accessibilityRole="button"
         accessibilityLabel="Choose genres"
       >
@@ -69,27 +150,43 @@ const GenrePicker = ({ value, onChange }) => {
       <Modal
         visible={visible}
         transparent
-        animationType="slide"
+        animationType="none"
         statusBarTranslucent
+        navigationBarTranslucent
         onRequestClose={close}
       >
         <View style={styles.overlay}>
-          <Pressable style={styles.backdrop} onPress={close} />
+          {/* Tap area gelap di luar sheet = tutup */}
+          <Animated.View
+            style={[styles.backdrop, { opacity: backdropOpacity }]}
+          >
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={close}
+              accessibilityLabel="Close genre picker"
+            />
+          </Animated.View>
 
-          <View
+          <Animated.View
             style={[
               styles.sheet,
               {
                 maxHeight: height * 0.75,
                 paddingBottom: spacing.lg + insets.bottom,
+                transform: [{ translateY }],
               },
             ]}
           >
-            <View style={styles.handle} />
+            {/* Area drag: handle + judul */}
+            <View style={styles.dragZone} {...panResponder.panHandlers}>
+              <View style={styles.handle} />
 
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Select genres</Text>
-              <Text style={styles.sheetCount}>{selected.length} selected</Text>
+              <View style={styles.sheetHeader}>
+                <Text style={styles.sheetTitle}>Select genres</Text>
+                <Text style={styles.sheetCount}>
+                  {selected.length} selected
+                </Text>
+              </View>
             </View>
 
             <ScrollView
@@ -123,7 +220,7 @@ const GenrePicker = ({ value, onChange }) => {
                 <Text style={styles.doneText}>Done</Text>
               </Pressable>
             </View>
-          </View>
+          </Animated.View>
         </View>
       </Modal>
     </>
@@ -171,8 +268,14 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
     gap: spacing.lg,
+  },
+
+  dragZone: {
+    gap: spacing.lg,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xs,
   },
 
   handle: {

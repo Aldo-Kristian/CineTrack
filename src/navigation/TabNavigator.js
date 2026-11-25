@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Film, Bookmark, Activity } from 'lucide-react-native';
 
 import colors from '../constants/colors';
@@ -11,15 +11,30 @@ import StatisticsScreen from '../screens/StatisticsScreen';
 
 const Tab = createBottomTabNavigator();
 
+const TAB_BAR_CONTENT_HEIGHT = 64;
+
 const TabNavigator = () => {
+  // Tinggi tab bar ditambah inset bawah supaya tidak menabrak
+  // tombol navigasi (3 tombol / gesture bar) milik HP.
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
+          paddingTop: 8,
+          paddingBottom: 8 + insets.bottom,
+        },
         tabBarActiveTintColor: colors.text,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: styles.tabLabel,
+        tabBarLabelStyle: {
+          fontSize: typography.fontSize.xs,
+          fontWeight: typography.fontWeight.medium,
+        },
       }}
     >
       <Tab.Screen
@@ -48,18 +63,3 @@ const TabNavigator = () => {
 };
 
 export default TabNavigator;
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: colors.surface,
-    borderTopColor: colors.border,
-    height: 64,
-    paddingTop: 8,
-    paddingBottom: 8,
-  },
-
-  tabLabel: {
-    fontSize: typography.fontSize.xs,
-    fontWeight: typography.fontWeight.medium,
-  },
-});
