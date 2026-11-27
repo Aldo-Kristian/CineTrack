@@ -57,6 +57,7 @@ export default ProviderButton;
 
 const styles = StyleSheet.create({
   button: {
+    maxWidth: '100%',
     minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
@@ -80,6 +81,7 @@ const styles = StyleSheet.create({
   },
 
   label: {
+    flexShrink: 1,
     fontSize: typography.fontSize.sm,
     fontWeight: typography.fontWeight.bold,
   },

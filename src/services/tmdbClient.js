@@ -18,10 +18,13 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const buildUrl = (path, params = {}) => {
   const query = Object.entries(params)
     .filter(([, value]) => value !== undefined && value !== null && value !== '')
-    .map(
-      ([key, value]) =>
-        `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`
-    )
+    .map(([key, value]) => {
+      const encoded = encodeURIComponent(String(value));
+      // TMDB mendokumentasikan append_to_response=watch/providers dengan slash.
+      const safeValue =
+        key === 'append_to_response' ? encoded.replace(/%2F/g, '/') : encoded;
+      return `${encodeURIComponent(key)}=${safeValue}`;
+    })
     .join('&');
 
   return `${BASE_URL}${path}${query ? `?${query}` : ''}`;
