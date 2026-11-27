@@ -49,7 +49,7 @@ const BackupScreen = () => {
       }
 
       file.create();
-      file.write(buildBackup(items));
+      await file.write(buildBackup(items));
 
       await Sharing.shareAsync(file.uri, {
         mimeType: 'application/json',
