@@ -169,10 +169,6 @@ const MediaDetailsScreen = ({ navigation, route }) => {
 
   const hasRating = media.rating !== null && media.rating !== undefined;
   const stale = isStale(media.providers_fetched_at);
-  const hasBackdrop = Boolean(media.backdrop_path);
-  const hasPoster = Boolean(media.poster_path || media.poster_uri);
-  const heroHeight = hasBackdrop ? 200 : hasPoster ? 160 : 120;
-
   return (
     <View style={styles.screen}>
       <ScrollView
@@ -181,31 +177,35 @@ const MediaDetailsScreen = ({ navigation, route }) => {
           { paddingBottom: spacing['4xl'] + insets.bottom },
         ]}
       >
-        <View style={[styles.hero, { height: heroHeight }]}>
+        <View style={styles.hero}>
           <BackdropImage media={media} style={styles.backdrop} />
 
           <LinearGradient
-            colors={['transparent', 'rgba(20,20,20,0.4)', colors.background]}
-            locations={[0, 0.6, 1]}
+            colors={[
+              'rgba(20,20,20,0.15)',
+              'rgba(20,20,20,0.72)',
+              colors.background,
+            ]}
+            locations={[0, 0.55, 1]}
             style={StyleSheet.absoluteFill}
           />
-        </View>
 
-        <View style={styles.heroBody}>
-          <PosterImage media={media} style={styles.poster} />
+          <View style={styles.heroBody}>
+            <PosterImage media={media} style={styles.poster} />
 
-          <View style={styles.heroText}>
-            <Text style={styles.title}>{media.title}</Text>
-            <Text style={styles.meta}>
-              {formatMediaType(media.type)}
-              {media.release_year ? ` · ${media.release_year}` : ''}
-            </Text>
+            <View style={styles.heroText}>
+              <Text style={styles.title}>{media.title}</Text>
+              <Text style={styles.meta}>
+                {formatMediaType(media.type)}
+                {media.release_year ? ` · ${media.release_year}` : ''}
+              </Text>
 
-            {media.genre ? (
-              <GenreList genre={media.genre} size="sm" max={3} />
-            ) : null}
+              {media.genre ? (
+                <GenreList genre={media.genre} size="sm" max={3} />
+              ) : null}
 
-            <StatusBadge status={media.status} />
+              <StatusBadge status={media.status} />
+            </View>
           </View>
         </View>
 
@@ -338,6 +338,7 @@ const styles = StyleSheet.create({
   },
 
   hero: {
+    overflow: 'hidden',
     backgroundColor: colors.surface,
   },
 
@@ -350,7 +351,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: spacing.lg,
     paddingHorizontal: spacing.lg,
-    marginTop: -72,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
   },
 
   poster: {
