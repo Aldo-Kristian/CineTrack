@@ -6,10 +6,14 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
   Platform,
   StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   Circle,
@@ -23,6 +27,7 @@ import {
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
+import { FAB_BOTTOM_PADDING, MAX_CONTENT_WIDTH } from '../constants/layout';
 import { MEDIA_STATUSES } from '../constants/mediaOptions';
 import useMedia from '../hooks/useMedia';
 import { useSnackbar } from '../hooks/useSnackbar';
@@ -55,6 +60,7 @@ const countActiveFilters = (filters) =>
 const WatchlistScreen = ({ navigation, route }) => {
   const { items, isLoading, remove, restore, edit } = useMedia();
   const { show } = useSnackbar();
+  const insets = useSafeAreaInsets();
 
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
@@ -206,7 +212,8 @@ const WatchlistScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.header}>
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        <View style={styles.header}>
         <View style={styles.titleRow}>
           <Text style={styles.heading}>Watchlist</Text>
           <Text style={styles.count}>
@@ -263,9 +270,11 @@ const WatchlistScreen = ({ navigation, route }) => {
           )}
           contentContainerStyle={[
             styles.listContent,
+            { paddingBottom: FAB_BOTTOM_PADDING + insets.bottom },
             visibleItems.length === 0 && styles.listContentEmpty,
           ]}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           initialNumToRender={8}
           windowSize={9}
           maxToRenderPerBatch={8}
@@ -288,6 +297,7 @@ const WatchlistScreen = ({ navigation, route }) => {
           }
         />
       )}
+      </KeyboardAvoidingView>
 
       <FloatingAddButton onPress={() => navigation.navigate('AddMedia')} />
 
@@ -337,7 +347,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
 
+  flex: {
+    flex: 1,
+  },
+
   header: {
+    width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: 'center',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing.md,
@@ -403,9 +420,11 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
+    width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: 'center',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingBottom: 100,
   },
 
   listContentEmpty: {

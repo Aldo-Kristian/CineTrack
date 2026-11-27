@@ -7,12 +7,16 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { Settings } from 'lucide-react-native';
 
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
+import { FAB_BOTTOM_PADDING, MAX_CONTENT_WIDTH } from '../constants/layout';
 import { MEDIA_STATUSES } from '../constants/mediaOptions';
 import useMedia from '../hooks/useMedia';
 import { getStatistics } from '../services/mediaService';
@@ -39,6 +43,7 @@ const Section = ({ title, count, children }) => (
 
 const HomeScreen = ({ navigation }) => {
   const { items, isLoading } = useMedia();
+  const insets = useSafeAreaInsets();
   const stats = useMemo(() => getStatistics(items), [items]);
 
   const watching = useMemo(
@@ -65,7 +70,12 @@ const HomeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: FAB_BOTTOM_PADDING + insets.bottom },
+        ]}
+      >
         <View style={styles.titleRow}>
           <View style={styles.titleBlock}>
             <BrandLogo
@@ -176,8 +186,10 @@ const styles = StyleSheet.create({
   },
 
   content: {
+    width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: 'center',
     padding: spacing.lg,
-    paddingBottom: 100,
   },
 
   titleRow: {

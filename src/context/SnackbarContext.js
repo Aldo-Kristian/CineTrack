@@ -13,6 +13,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
+import {
+  FAB_MARGIN,
+  FAB_SIZE,
+  MAX_CONTENT_WIDTH,
+  TAB_BAR_CONTENT_HEIGHT,
+} from '../constants/layout';
 
 const SnackbarContext = createContext(null);
 
@@ -82,7 +88,12 @@ export const SnackbarProvider = ({ children }) => {
             style={[
               styles.container,
               {
-                bottom: 80 + insets.bottom,
+                bottom:
+                  TAB_BAR_CONTENT_HEIGHT +
+                  insets.bottom +
+                  FAB_SIZE +
+                  FAB_MARGIN +
+                  spacing.sm,
                 transform: [{ translateY }],
               },
             ]}
@@ -133,11 +144,16 @@ const styles = StyleSheet.create({
 
   container: {
     position: 'absolute',
-    left: spacing.lg,
-    right: spacing.lg,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 30,
+    elevation: 30,
   },
 
   snackbar: {
+    width: '92%',
+    maxWidth: MAX_CONTENT_WIDTH,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,

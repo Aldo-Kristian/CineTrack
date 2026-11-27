@@ -1,27 +1,36 @@
 import React, { memo } from 'react';
-import { Text, FlatList, Pressable, StyleSheet } from 'react-native';
+import {
+  Text,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+} from 'react-native';
 
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
+import { MAX_CONTENT_WIDTH } from '../constants/layout';
 import PosterImage from './PosterImage';
 
-const ITEM_WIDTH = 106;
-
-const CarouselItem = memo(({ media, onPress }) => (
+const CarouselItem = memo(({ media, onPress, itemWidth }) => (
   <Pressable
     onPress={() => onPress?.(media)}
-    style={styles.item}
+    style={[styles.item, { width: itemWidth }]}
     accessibilityRole="button"
     accessibilityLabel={`Open ${media.title}`}
   >
     <PosterImage
       media={media}
-      style={styles.poster}
+      style={[styles.poster, { width: itemWidth }]}
       size="w185"
       recyclingKey={`carousel-${media.id}`}
     />
-    <Text style={styles.title} numberOfLines={2}>
+    <Text
+      style={styles.title}
+      numberOfLines={2}
+      maxFontSizeMultiplier={1.3}
+    >
       {media.title}
     </Text>
   </Pressable>
@@ -30,6 +39,13 @@ const CarouselItem = memo(({ media, onPress }) => (
 CarouselItem.displayName = 'CarouselItem';
 
 const PosterCarousel = ({ data, onPress, emptyLabel = 'Nothing here yet' }) => {
+  const { width } = useWindowDimensions();
+  const contentWidth = Math.min(width, MAX_CONTENT_WIDTH);
+  const itemWidth = Math.min(
+    200,
+    Math.max(140, (contentWidth - spacing.lg * 2 - spacing.md) / 2.3)
+  );
+
   if (!data?.length) {
     return <Text style={styles.empty}>{emptyLabel}</Text>;
   }
@@ -39,7 +55,9 @@ const PosterCarousel = ({ data, onPress, emptyLabel = 'Nothing here yet' }) => {
       horizontal
       data={data}
       keyExtractor={(item) => String(item.id)}
-      renderItem={({ item }) => <CarouselItem media={item} onPress={onPress} />}
+      renderItem={({ item }) => (
+        <CarouselItem media={item} onPress={onPress} itemWidth={itemWidth} />
+      )}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.list}
       initialNumToRender={4}
@@ -47,8 +65,8 @@ const PosterCarousel = ({ data, onPress, emptyLabel = 'Nothing here yet' }) => {
       maxToRenderPerBatch={4}
       removeClippedSubviews
       getItemLayout={(_, index) => ({
-        length: ITEM_WIDTH + spacing.md,
-        offset: (ITEM_WIDTH + spacing.md) * index,
+        length: itemWidth + spacing.md,
+        offset: (itemWidth + spacing.md) * index,
         index,
       })}
     />
@@ -64,12 +82,10 @@ const styles = StyleSheet.create({
   },
 
   item: {
-    width: ITEM_WIDTH,
     gap: spacing.sm,
   },
 
   poster: {
-    width: ITEM_WIDTH,
     aspectRatio: 2 / 3,
     borderRadius: 8,
     borderWidth: 1,

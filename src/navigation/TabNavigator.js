@@ -5,13 +5,13 @@ import { Film, Bookmark, Activity } from 'lucide-react-native';
 
 import colors from '../constants/colors';
 import typography from '../constants/typography';
+import { TAB_BAR_CONTENT_HEIGHT } from '../constants/layout';
 import HomeScreen from '../screens/HomeScreen';
 import WatchlistScreen from '../screens/WatchlistScreen';
 import StatisticsScreen from '../screens/StatisticsScreen';
 
 const Tab = createBottomTabNavigator();
 
-const TAB_BAR_CONTENT_HEIGHT = 64;
 
 const TabNavigator = () => {
   // Tinggi tab bar ditambah inset bawah supaya tidak menabrak
@@ -22,6 +22,8 @@ const TabNavigator = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
+        tabBarHideOnKeyboard: true,
+        tabBarAllowFontScaling: false,
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
