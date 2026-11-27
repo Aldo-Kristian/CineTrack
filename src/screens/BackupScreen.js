@@ -16,6 +16,7 @@ import { Upload, Download, FolderOpen, FileText, X } from 'lucide-react-native';
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
+import { MAX_CONTENT_WIDTH } from '../constants/layout';
 import useMedia from '../hooks/useMedia';
 import { buildBackup, parseBackup } from '../services/mediaService';
 import { readTextFile } from '../utils/files';
@@ -221,6 +222,9 @@ const styles = StyleSheet.create({
   },
 
   content: {
+    width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: 'center',
     padding: spacing.lg,
     gap: spacing.lg,
   },

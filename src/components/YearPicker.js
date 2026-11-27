@@ -108,12 +108,18 @@ const YearPicker = ({ value, onChange, hasError = false }) => {
   const panelLeft = anchor.width ? anchor.x : spacing.lg;
   const panelWidth = anchor.width || windowWidth - spacing.lg * 2;
   const preferredTop = anchor.y + anchor.height + GAP;
-  const available = windowHeight - keyboardHeight - preferredTop - GAP;
+  const available =
+    windowHeight -
+    keyboardHeight -
+    preferredTop -
+    GAP -
+    insets.bottom;
   const panelHeight = Math.min(
     PANEL_MAX_HEIGHT,
     Math.max(PANEL_MIN_HEIGHT, available)
   );
-  const maxTop = windowHeight - keyboardHeight - panelHeight - GAP;
+  const maxTop =
+    windowHeight - keyboardHeight - panelHeight - GAP - insets.bottom;
   const panelTop = Math.max(insets.top + GAP, Math.min(preferredTop, maxTop));
 
   return (

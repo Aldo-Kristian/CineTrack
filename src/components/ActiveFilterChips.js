@@ -49,7 +49,9 @@ const ActiveFilterChips = ({ filters, onRemove }) => {
           accessibilityRole="button"
           accessibilityLabel={`Remove filter ${labelFor(item.kind, item.value)}`}
         >
-          <Text style={styles.text}>{labelFor(item.kind, item.value)}</Text>
+          <Text style={styles.text} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+            {labelFor(item.kind, item.value)}
+          </Text>
           <X size={14} color={colors.textSecondary} />
         </Pressable>
       ))}

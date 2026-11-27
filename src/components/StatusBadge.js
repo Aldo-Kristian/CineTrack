@@ -33,7 +33,11 @@ const StatusBadge = ({ status }) => {
         { borderColor: config.color },
       ]}
     >
-      <Text style={[styles.text, { color: config.color }]}>
+      <Text
+        style={[styles.text, { color: config.color }]}
+        numberOfLines={1}
+        maxFontSizeMultiplier={1.3}
+      >
         {config.label}
       </Text>
     </View>

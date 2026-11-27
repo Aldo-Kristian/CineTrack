@@ -14,6 +14,7 @@ import { Star, Pencil, Trash2 } from 'lucide-react-native';
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
+import { MAX_CONTENT_WIDTH } from '../constants/layout';
 import useMedia from '../hooks/useMedia';
 import { useSnackbar } from '../hooks/useSnackbar';
 import { mediaToFormData } from '../services/validationService';
@@ -322,6 +323,9 @@ const styles = StyleSheet.create({
   },
 
   content: {
+    width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: 'center',
     paddingBottom: spacing['4xl'],
   },
 

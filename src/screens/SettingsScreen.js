@@ -22,6 +22,7 @@ import {
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
+import { MAX_CONTENT_WIDTH } from '../constants/layout';
 import { APP_VERSION } from '../constants/appInfo';
 import useMedia from '../hooks/useMedia';
 import { useSnackbar } from '../hooks/useSnackbar';
@@ -503,6 +504,9 @@ const styles = StyleSheet.create({
   },
 
   content: {
+    width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: 'center',
     padding: spacing.lg,
     gap: spacing.lg,
   },

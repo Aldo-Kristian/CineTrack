@@ -46,6 +46,7 @@ const ProviderButton = ({
           !isPurchase && { color: colors.background },
         ]}
         numberOfLines={1}
+        maxFontSizeMultiplier={1.2}
       >
         {label}
       </Text>

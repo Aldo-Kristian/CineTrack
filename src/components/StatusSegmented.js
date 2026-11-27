@@ -39,6 +39,8 @@ const StatusSegmented = ({
                 styles.label,
                 selected && { color: accent, fontWeight: typography.fontWeight.semibold },
               ]}
+              numberOfLines={1}
+              maxFontSizeMultiplier={1.3}
             >
               {item.label}
             </Text>

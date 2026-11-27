@@ -6,6 +6,7 @@ import { Star } from 'lucide-react-native';
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
+import { MAX_CONTENT_WIDTH } from '../constants/layout';
 import { MEDIA_TYPES, MEDIA_STATUSES } from '../constants/mediaOptions';
 import useMedia from '../hooks/useMedia';
 import { getStatistics } from '../services/mediaService';
@@ -102,6 +103,9 @@ const styles = StyleSheet.create({
   },
 
   content: {
+    width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: 'center',
     padding: spacing.lg,
     paddingBottom: spacing['4xl'],
     gap: spacing.xl,

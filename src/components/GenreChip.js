@@ -32,7 +32,9 @@ const GenreChip = ({ label, selected = false, size = 'md', onPress }) => {
       {selected && onPress ? (
         <Check size={14} color={colors.background} />
       ) : null}
-      <Text style={textStyle}>{label}</Text>
+      <Text style={textStyle} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+        {label}
+      </Text>
     </>
   );
 
