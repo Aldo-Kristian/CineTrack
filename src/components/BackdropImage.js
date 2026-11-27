@@ -8,6 +8,7 @@ import PosterPlaceholder from './PosterPlaceholder';
 const BackdropImage = ({ media, style, transition = 200 }) => {
   const candidates = [
     imageUrl(media?.backdrop_path, 'w780'),
+    media?.poster_uri,
     imageUrl(media?.poster_path, 'w780'),
   ].filter(Boolean);
   const [failedSources, setFailedSources] = useState([]);
@@ -15,6 +16,10 @@ const BackdropImage = ({ media, style, transition = 200 }) => {
 
   return (
     <View style={[styles.container, style]}>
+      {/* Latar bertema selalu ada supaya hero tidak pernah berupa area kosong
+          saat backdrop belum termuat, gagal, atau tidak tersedia. */}
+      <PosterPlaceholder media={media} style={StyleSheet.absoluteFill} />
+
       {source ? (
         <Image
           source={source}
@@ -30,9 +35,7 @@ const BackdropImage = ({ media, style, transition = 200 }) => {
           }
           accessibilityLabel={`${media?.title ?? 'Title'} backdrop`}
         />
-      ) : (
-        <PosterPlaceholder media={media} style={StyleSheet.absoluteFill} />
-      )}
+      ) : null}
     </View>
   );
 };

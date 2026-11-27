@@ -35,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Home: FAB is no longer clipped or drawn under carousel cards; the last item can scroll clear of it.
 - Year picker panel accounts for the bottom navigation inset.
 - Bottom sheets respect both 3-button and gesture navigation insets.
+- Details hero no longer shows a large blank gap when the backdrop is missing, still loading, or fails; it uses the poster/theme placeholder and a compact height when no backdrop exists.
 
 ## [2.0.0] — 2026-11-28
 

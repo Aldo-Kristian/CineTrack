@@ -169,6 +169,9 @@ const MediaDetailsScreen = ({ navigation, route }) => {
 
   const hasRating = media.rating !== null && media.rating !== undefined;
   const stale = isStale(media.providers_fetched_at);
+  const hasBackdrop = Boolean(media.backdrop_path);
+  const hasPoster = Boolean(media.poster_path || media.poster_uri);
+  const heroHeight = hasBackdrop ? 200 : hasPoster ? 160 : 120;
 
   return (
     <View style={styles.screen}>
@@ -178,7 +181,7 @@ const MediaDetailsScreen = ({ navigation, route }) => {
           { paddingBottom: spacing['4xl'] + insets.bottom },
         ]}
       >
-        <View style={styles.hero}>
+        <View style={[styles.hero, { height: heroHeight }]}>
           <BackdropImage media={media} style={styles.backdrop} />
 
           <LinearGradient
@@ -335,7 +338,6 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    height: 218,
     backgroundColor: colors.surface,
   },
 
