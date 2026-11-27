@@ -31,6 +31,28 @@ const findGenre = (name) =>
 export const getGenreColor = (name) =>
   findGenre(name)?.color ?? colors.textSecondary;
 
+// Urutan prioritas genre utama untuk tema kartu.
+export const GENRE_PRIORITY = [
+  'Horror',
+  'Sci-Fi',
+  'Fantasy',
+  'Animation',
+  'Romance',
+  'Comedy',
+  'Thriller',
+  'Crime',
+  'War',
+  'Western',
+  'Action',
+  'Adventure',
+  'Music',
+  'Documentary',
+  'History',
+  'Mystery',
+  'Family',
+  'Drama',
+];
+
 // 'Action, Drama' -> ['Action', 'Drama'] (nama dinormalkan, duplikat dibuang).
 export const parseGenres = (value) => {
   if (!value) {
@@ -70,4 +92,17 @@ export const serializeGenres = (list) => {
   const unknown = list.filter((value) => !order.includes(value));
 
   return [...known, ...unknown].join(', ');
+};
+
+// Genre utama deterministik: genre pertama di GENRE_PRIORITY yang dimiliki.
+// Genre di luar daftar memakai genre pertama yang tersimpan.
+export const getPrimaryGenre = (genreString) => {
+  const genres = parseGenres(genreString);
+
+  if (genres.length === 0) {
+    return null;
+  }
+
+  const primary = GENRE_PRIORITY.find((name) => genres.includes(name));
+  return primary ?? genres[0];
 };

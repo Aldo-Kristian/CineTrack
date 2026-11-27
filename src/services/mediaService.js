@@ -1,12 +1,35 @@
 import {
   getAllMedia,
   getMediaById,
+  findByTmdbId,
   createMedia,
   updateMedia,
+  updateProviders,
   deleteMedia,
 } from '../database/mediaRepository';
 import { MEDIA_TYPES, MEDIA_STATUSES } from '../constants/mediaOptions';
 import { parseGenres } from '../constants/genres';
+import { isTmdbConfigured } from '../config/env';
+import {
+  searchMulti,
+  getDetails,
+  getWatchProviders,
+  getAvailableProviders,
+} from './tmdbClient';
+import {
+  mapTmdbSearchResult,
+  mapTmdbDetails,
+  mapTmdbToPayload,
+  isExactTmdbMatch,
+  tmdbTypeToMediaType,
+} from './tmdbMapper';
+import {
+  normalizeProviders,
+  providersFromDetails,
+  serializeProviders,
+  isStale,
+  EMPTY_PROVIDERS,
+} from './providerService';
 import {
   validateMediaForm,
   formDataToPayload,
@@ -66,6 +89,14 @@ export const editMedia = async (db, id, formData) => {
 };
 
 export const removeMedia = (db, id) => deleteMedia(db, id);
+
+// Undo delete: data lengkap (termasuk cache provider) dimasukkan kembali
+// sebagai record baru. ID lama tidak dipakai ulang.
+export const restoreMedia = async (db, media) => {
+  const form = mediaToFormData(media);
+  const payload = formDataToPayload(form);
+  return createMedia(db, payload);
+};
 
 // Filter murni di memori: query (title/genre), type, status, genre.
 export const filterMedia = (
@@ -270,4 +301,387 @@ export const importBackup = async (db, text) => {
   });
 
   return { ok: true, imported: payloads.length, duplicates, invalid };
+};
+
+// ---------------------------------------------------------------
+// TMDB integration (service layer; screen tidak memanggil fetch)
+// ---------------------------------------------------------------
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isAbortError = (error) => error?.code === 'ABORTED';
+
+// Preview untuk bottom sheet konfirmasi. Jika detail gagal (mis. offline),
+// tetap kembalikan data dasar dari hasil pencarian supaya user bisa menyimpan.
+export const fetchTmdbPreview = async (tmdbResult, region) => {
+  const type = tmdbTypeToMediaType(tmdbResult?.media_type);
+
+  try {
+    const details = await getDetails(type, tmdbResult.id);
+    let providers = providersFromDetails(details, region);
+
+    if (!details?.['watch/providers']) {
+      try {
+        const results = await getWatchProviders(type, tmdbResult.id);
+        providers = normalizeProviders(results, region);
+      } catch {
+        providers = { ...EMPTY_PROVIDERS };
+      }
+    }
+
+    return {
+      ok: true,
+      degraded: false,
+      data: mapTmdbDetails(type, details, { providers, region }),
+    };
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw error;
+    }
+
+    const basic = mapTmdbSearchResult(tmdbResult);
+
+    return {
+      ok: true,
+      degraded: true,
+      error,
+      data: {
+        ...basic,
+        providers_json: serializeProviders({ ...EMPTY_PROVIDERS }),
+        providers_region: region,
+        providers_fetched_at: '',
+      },
+    };
+  }
+};
+
+// Tambah dari hasil TMDB. Duplikat (tmdb_id + type) ditolak ramah.
+export const addMediaFromTmdb = async (
+  db,
+  tmdbResult,
+  { status = 'TO_WATCH', rating = null, region = 'ID' } = {}
+) => {
+  const type = tmdbTypeToMediaType(tmdbResult?.media_type);
+  const tmdbId = tmdbResult?.id;
+
+  if (!tmdbId) {
+    return {
+      ok: false,
+      errors: { general: 'This title has no TMDB id.' },
+    };
+  }
+
+  const existing = await findByTmdbId(db, tmdbId, type);
+
+  if (existing) {
+    return {
+      ok: false,
+      duplicate: true,
+      existing,
+      errors: { general: 'Already in your collection.' },
+    };
+  }
+
+  let details = null;
+  let providers = { ...EMPTY_PROVIDERS };
+  let degraded = false;
+
+  try {
+    details = await getDetails(type, tmdbId);
+    providers = providersFromDetails(details, region);
+
+    if (!details?.['watch/providers']) {
+      try {
+        providers = normalizeProviders(
+          await getWatchProviders(type, tmdbId),
+          region
+        );
+      } catch {
+        providers = { ...EMPTY_PROVIDERS };
+      }
+    }
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw error;
+    }
+
+    degraded = true;
+    details = tmdbResult;
+  }
+
+  const payload = mapTmdbToPayload(type, details, {
+    providers,
+    region,
+    fetchedAt: degraded ? null : new Date().toISOString(),
+    status,
+    rating,
+  });
+
+  const { isValid, errors } = validateMediaForm(mediaToFormData(payload));
+
+  if (!isValid) {
+    return { ok: false, errors };
+  }
+
+  try {
+    const media = await createMedia(db, payload);
+    return { ok: true, media, degraded };
+  } catch (error) {
+    if (String(error?.message ?? '').includes('UNIQUE constraint failed')) {
+      return {
+        ok: false,
+        duplicate: true,
+        errors: { general: 'Already in your collection.' },
+      };
+    }
+
+    throw error;
+  }
+};
+
+export const refreshProvidersForMedia = async (db, media, region) => {
+  if (!media?.tmdb_id) {
+    return { ok: false, error: 'This title has no TMDB match.' };
+  }
+
+  const results = await getWatchProviders(media.type, media.tmdb_id, {});
+  const providers = normalizeProviders(results, region);
+  const fetchedAt = new Date().toISOString();
+
+  const updated = await updateProviders(db, media.id, {
+    providers_json: serializeProviders(providers),
+    providers_region: region,
+    providers_fetched_at: fetchedAt,
+  });
+
+  if (!updated) {
+    return { ok: false, error: 'Media not found.' };
+  }
+
+  return { ok: true, media: updated, providers };
+};
+
+// Dipakai untuk background refresh dan setelah region berubah.
+export const refreshProviderCaches = async (
+  db,
+  items,
+  region,
+  { limit = 20, onProgress } = {}
+) => {
+  const targets = items.filter((item) => item.tmdb_id).slice(0, limit);
+  let updated = 0;
+  let failed = 0;
+
+  for (let index = 0; index < targets.length; index += 1) {
+    const media = targets[index];
+    onProgress?.({ current: index + 1, total: targets.length, media });
+
+    try {
+      const result = await refreshProvidersForMedia(db, media, region);
+      if (result.ok) {
+        updated += 1;
+      } else {
+        failed += 1;
+      }
+    } catch (error) {
+      failed += 1;
+      console.warn('Provider refresh failed', media.id, error?.message);
+    }
+
+    if (index < targets.length - 1) {
+      await delay(250);
+    }
+  }
+
+  return { updated, failed, total: targets.length };
+};
+
+export const shouldRefreshProviders = (media, region) =>
+  Boolean(media?.tmdb_id) &&
+  (media.providers_region !== region ||
+    !media.providers_fetched_at ||
+    isStale(media.providers_fetched_at));
+
+export const getProviderCatalog = async (region) => {
+  if (!isTmdbConfigured) {
+    return { ok: false, error: 'Online features are off.' };
+  }
+
+  try {
+    const providers = await getAvailableProviders(region);
+    return { ok: true, providers };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error?.message ?? 'Cannot load streaming providers.',
+    };
+  }
+};
+
+const mergeMappedIntoForm = (form, mapped, overwrite = false) => {
+  const next = { ...form };
+
+  if (mapped.tmdb_id) {
+    next.tmdb_id = mapped.tmdb_id;
+  }
+
+  if (mapped.poster_path) {
+    next.poster_path = mapped.poster_path;
+  }
+
+  if (mapped.backdrop_path) {
+    next.backdrop_path = mapped.backdrop_path;
+  }
+
+  if (mapped.tmdb_link) {
+    next.tmdb_link = mapped.tmdb_link;
+  }
+
+  if (mapped.providers_json) {
+    next.providers_json = mapped.providers_json;
+    next.providers_region = mapped.providers_region ?? '';
+    next.providers_fetched_at = mapped.providers_fetched_at ?? '';
+  }
+
+  const fill = (field, value) => {
+    if (overwrite || !String(next[field] ?? '').trim()) {
+      if (value !== undefined && value !== null && String(value).trim()) {
+        next[field] = value;
+      }
+    }
+  };
+
+  fill('genre', mapped.genre);
+  fill('release_year', mapped.release_year);
+  fill('description', mapped.description);
+
+  return next;
+};
+
+const loadMappedForCandidate = async (media, candidate, region) => {
+  const type = media.type;
+  const tmdbId = candidate.id ?? candidate.tmdb_id;
+
+  try {
+    const details = await getDetails(type, tmdbId);
+    let providers = providersFromDetails(details, region);
+
+    if (!details?.['watch/providers']) {
+      try {
+        providers = normalizeProviders(
+          await getWatchProviders(type, tmdbId),
+          region
+        );
+      } catch {
+        providers = { ...EMPTY_PROVIDERS };
+      }
+    }
+
+    return mapTmdbDetails(type, details, { providers, region });
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw error;
+    }
+
+    const basic = mapTmdbSearchResult({
+      ...candidate,
+      media_type: type === 'SERIES' ? 'tv' : 'movie',
+    });
+
+    return {
+      ...basic,
+      providers_json: serializeProviders({ ...EMPTY_PROVIDERS }),
+      providers_region: region,
+      providers_fetched_at: '',
+    };
+  }
+};
+
+// 3.7 — lengkapi item lama. Auto-apply hanya untuk exact match.
+export const enrichExistingMedia = async (
+  db,
+  items,
+  region,
+  { onProgress, signal } = {}
+) => {
+  const targets = items.filter((item) => !item.tmdb_id);
+  const review = [];
+  let applied = 0;
+  let failed = 0;
+
+  for (let index = 0; index < targets.length; index += 1) {
+    if (signal?.aborted) {
+      return { ok: true, cancelled: true, applied, review, failed };
+    }
+
+    const media = targets[index];
+    onProgress?.({
+      current: index + 1,
+      total: targets.length,
+      title: media.title,
+    });
+
+    try {
+      const results = await searchMulti(media.title, { signal });
+      const exact = results.find((candidate) =>
+        isExactTmdbMatch(media, candidate)
+      );
+
+      if (exact) {
+        const mapped = await loadMappedForCandidate(media, exact, region);
+        const nextForm = mergeMappedIntoForm(
+          mediaToFormData(media),
+          mapped,
+          false
+        );
+
+        await updateMedia(db, media.id, formDataToPayload(nextForm));
+        applied += 1;
+      } else if (results.length > 0) {
+        review.push({ media, candidates: results.slice(0, 3) });
+      }
+    } catch (error) {
+      if (isAbortError(error)) {
+        return { ok: true, cancelled: true, applied, review, failed };
+      }
+
+      failed += 1;
+    }
+
+    if (index < targets.length - 1) {
+      await delay(250);
+    }
+  }
+
+  return { ok: true, cancelled: false, applied, review, failed };
+};
+
+export const applyTmdbMatch = async (
+  db,
+  media,
+  candidate,
+  region,
+  { overwrite = false } = {}
+) => {
+  const mapped = await loadMappedForCandidate(media, candidate, region);
+  const nextForm = mergeMappedIntoForm(
+    mediaToFormData(media),
+    mapped,
+    overwrite
+  );
+  const payload = formDataToPayload(nextForm);
+
+  const { isValid, errors } = validateMediaForm(nextForm);
+
+  if (!isValid) {
+    return { ok: false, errors };
+  }
+
+  const updated = await updateMedia(db, media.id, payload);
+
+  if (!updated) {
+    return { ok: false, errors: { general: 'Media not found.' } };
+  }
+
+  return { ok: true, media: updated };
 };
