@@ -126,8 +126,16 @@ const SettingsScreen = ({ navigation }) => {
 
   const handleSubscriptions = async (ids) => {
     setSubscriptionsVisible(false);
-    await setSubscriptions(ids);
-    show({ message: 'Subscriptions saved' });
+
+    try {
+      await setSubscriptions(ids);
+      show({ message: 'Subscriptions saved' });
+    } catch (error) {
+      Alert.alert(
+        'Cannot save subscriptions',
+        error?.message ?? 'Please try again.'
+      );
+    }
   };
 
   const startEnrichment = async () => {
@@ -201,20 +209,27 @@ const SettingsScreen = ({ navigation }) => {
   };
 
   const applyCandidate = async (media, candidate, overwrite) => {
-    const result = await applyMatch(media, candidate, { overwrite });
+    try {
+      const result = await applyMatch(media, candidate, { overwrite });
 
-    if (!result.ok) {
+      if (!result.ok) {
+        Alert.alert(
+          'Cannot apply match',
+          Object.values(result.errors ?? {}).join('\n')
+        );
+        return;
+      }
+
+      setReview((current) =>
+        current.filter((entry) => entry.media.id !== media.id)
+      );
+      show({ message: `Metadata updated for "${media.title}"` });
+    } catch (error) {
       Alert.alert(
         'Cannot apply match',
-        Object.values(result.errors ?? {}).join('\n')
+        error?.message ?? 'Please try again.'
       );
-      return;
     }
-
-    setReview((current) =>
-      current.filter((entry) => entry.media.id !== media.id)
-    );
-    show({ message: `Metadata updated for "${media.title}"` });
   };
 
   const promptApplyCandidate = (media, candidate) => {
