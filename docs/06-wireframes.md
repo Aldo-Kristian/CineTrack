@@ -1,7 +1,7 @@
 # CineTrack — Wireframe Design
 
 **Document ID:** CT-WF-001\
-**Version:** 2.0\
+**Version:** 2.1\
 **Status:** Final\
 **Phase:** 3 — System Design\
 **Project:** CineTrack\
@@ -11,6 +11,7 @@
 
 | Version | Date | Summary | Reason |
 | --- | --- | --- | --- |
+| 2.1 | 2026-11-28 | Updated FAB placement/bottom padding, keyboard-aware sheet layout, sticky rating footer, responsive content width | Perbaikan responsive UI |
 | 2.0 | 2026-11-28 | Search-first add, confirm sheet, Home carousels, Watchlist filter sheet/chips, Detail hero/where-to-watch, Settings, four genre card variants, themed placeholder | Lecturer consultation + UX fixes |
 | 1.0 | 2026-11-25 | Initial low-fidelity wireframes | Project setup |
 
@@ -264,7 +265,7 @@ Edit mode expands “More details” by default.
 │ is not endorsed or certified by TMDB│
 │ Streaming availability data provided│
 │ by JustWatch.                       │
-│ CineTrack 2.0.0                     │
+│ CineTrack 2.1.0                     │
 └─────────────────────────────────────┘
 ```
 
@@ -335,7 +336,76 @@ All variants show title, type · year, rating, status, max 2 genre chips, and a 
 └───────────────┘
 ```
 
-## 10. Wireframe Decisions
+## 10. Responsive Layout Wireframes
+
+### 10.1 Home — FAB and scroll clearance
+
+```
+┌─────────────────────────────────────┐
+│ CINETRACK                       [⚙] │
+│ Home content                        │
+│ ┌────┐ ┌────┐ ┌────┐                │
+│ │pst │ │pst │ │pst │  →             │
+│ └────┘ └────┘ └────┘                │
+│ ...                                 │
+│ last card ends above FAB padding    │
+│                          [ + ]      │  ← FAB above cards, below header
+│ ─────────────────────────────────── │
+│   Home      Watchlist     Statistics│  ← tab bar owns bottom inset
+└─────────────────────────────────────┘
+```
+
+- FAB is the last sibling in an absolute-fill overlay (`pointerEvents="box-none"`).
+- Scroll content bottom padding = `FAB_SIZE + 2×margin + insets.bottom`.
+- FAB hides while the keyboard is open.
+
+### 10.2 Bottom sheet with keyboard
+
+```
+Tanpa keyboard                         Keyboard terbuka
+┌─────────────────────┐                ┌─────────────────────┐
+│ backdrop            │                │ backdrop            │
+│ ┌─────────────────┐ │                │ ┌─────────────────┐ │
+│ │ Find poster… [×]│ │                │ │ Find poster… [×]│ │
+│ │ [ search…     ] │ │                │ │ [ search…     ] │ │
+│ │ [result 1]      │ │                │ │ [result 1]      │ │
+│ │ [result 2]      │ │                │ │ [result 2]      │ │
+│ │ [result 3]      │ │                │ └─────────────────┘ │
+│ └─────────────────┘ │                │  keyboard            │
+│ nav bar inset       │                │  (sheet bottom =     │
+└─────────────────────┘                │   keyboardHeight)    │
+                                       └─────────────────────┘
+```
+
+- Sheet bottom = `keyboardHeight`; maximum height = `windowHeight − keyboardHeight − insets.top − gap`.
+- Search input stays fixed in the sheet header; results scroll in a `FlatList`.
+- When the keyboard is hidden, the sheet uses `insets.bottom + spacing.md` padding.
+
+### 10.3 Rating sheet — sticky footer
+
+```
+┌─────────────────────────────────────┐
+│ Rate this title                 [×] │
+│ Pom Poko                            │
+│ Completed! Add a rating or skip.    │
+│                                     │
+│ Your Rating            4.0 / 5      │
+│ [★] [★] [★] [★] [☆]   Clear       │
+│                                     │
+│ ┌─────────────┐ ┌─────────────────┐ │  ← footer sticky
+│ │    Skip     │ │   Save rating   │ │
+│ └─────────────┘ └─────────────────┘ │
+│        nav bar inset padding        │
+└─────────────────────────────────────┘
+```
+
+### 10.4 Wide screens
+
+- Forms, sheets, settings, details, statistics, and backup content are centered with `maxWidth: 640`.
+- Poster carousels calculate card width from `useWindowDimensions` (clamped 140–200 dp).
+- The shared content width prevents absurdly wide cards on tablets/foldables.
+
+## 11. Wireframe Decisions
 
 - Dark background with genre accents; red remains the global primary action color.
 - Watchlist header is reduced to search + Filter button; type/status/genre/sort move into a sheet.

@@ -75,11 +75,18 @@ Screens/Components → useMedia / context → mediaService → repositories (SQL
 
 - JavaScript, `StyleSheet`, dark theme, constants in `src/constants/`.
 - Icons: `lucide-react-native`.
-- Bottom sheets use React Native `Modal` (see `ModalSheet.js`). Do not add `reanimated` or a bottom-sheet library.
+- Bottom sheets use the shared `BottomSheet` (see `src/components/BottomSheet.js`). Do not add `reanimated` or a bottom-sheet library.
 - Minimum touch target 44×44 dp; every icon-only button needs an `accessibilityLabel`.
 - UI copy is **English**. Comments may be Indonesian, matching existing style.
 - All four card variants must expose the same information: title, type · year, rating, status, max 2 genre chips, streaming action.
 - Use `React.memo` for cards and tune FlatList props; avoid heavy shadows.
+- **Safe areas are mandatory:** every element attached to a screen edge uses `useSafeAreaInsets`/`SafeAreaView`. Android runs edge-to-edge (3-button and gesture nav).
+- **All bottom sheets use `BottomSheet`** (`src/components/BottomSheet.js`). Do not create a second sheet/Modal implementation. It handles keyboard height, nested `SafeAreaProvider`, sticky footer, and max width.
+- **All screens with `TextInput` use `ScreenContainer`** (or an equivalent KAV `behavior="padding"` wrapper). `KeyboardAvoidingView` must set a behavior on both iOS and Android.
+- **No `position: 'absolute'` without explicit inset and z-order.** Floating elements must be last-sibling overlays with `pointerEvents="box-none"`, `zIndex`, and high `elevation`.
+- Content width is capped at `MAX_CONTENT_WIDTH` (640) via `src/constants/layout.js`; use `FAB_SIZE`/`FAB_MARGIN`/`TAB_BAR_CONTENT_HEIGHT` from that file instead of hardcoding.
+- Reserve a scroll `paddingBottom` of at least `FAB_SIZE + 2×FAB_MARGIN + inset` on screens with the FAB.
+- Small fixed-space labels (chips, badges, tab labels, segmented controls) use `numberOfLines` + `maxFontSizeMultiplier` ≤ 1.3; tab labels disable font scaling.
 
 ## Testing
 
@@ -105,5 +112,6 @@ Screens/Components → useMedia / context → mediaService → repositories (SQL
 
 | Version | Date | Summary | Reason |
 | --- | --- | --- | --- |
+| 2.1 | 2026-11-28 | Added permanent safe-area, BottomSheet, ScreenContainer, floating-element, max-width, and font-scaling rules | Perbaikan responsive UI |
 | 2.0 | 2026-11-28 | Documented the real React Navigation structure; added layered architecture, TMDB/env, DB v2, test, and EAS rules | Docs-to-code alignment + lecturer/UX revision |
 | 1.0 | 2026-11-25 | Initial agent instructions | Project setup |

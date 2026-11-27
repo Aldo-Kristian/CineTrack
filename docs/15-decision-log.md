@@ -1,7 +1,7 @@
 # CineTrack — Decision Log
 
 **Document ID:** CT-DL-001\
-**Version:** 2.0\
+**Version:** 2.1\
 **Status:** Final\
 **Project:** CineTrack\
 **Last updated:** 2026-11-28
@@ -10,6 +10,7 @@
 
 | Version | Date | Summary | Reason |
 | --- | --- | --- | --- |
+| 2.1 | 2026-11-28 | Added responsive/adaptive decisions: edge-to-edge, shared BottomSheet, keyboard hook, FAB overlay, snackbar placement, RatingInput stars | Perbaikan responsive UI |
 | 2.0 | 2026-11-28 | New document: v2 architecture/product decisions and implementation trade-offs | Lecturer consultation + UX fixes + implementation |
 
 ---
@@ -116,7 +117,32 @@ These were not fully specified in the brief:
 9. **No persisted filters:** filters reset when the app restarts; this keeps the Watchlist predictable.
 10. **Unverified provider templates:** Crunchyroll (HTTP 403) and Hotstar (301 to a Disney+ app helper) were discarded rather than shipped untested.
 
-## 7. Accepted Risks
+## 7. Responsive / Adaptive UI Decisions (v2.1)
+
+| ID | Context | Options | Decision | Reason |
+| --- | --- | --- | --- | --- |
+| D-61 | Android edge-to-edge | Assume window resize, use insets | **Use safe-area insets everywhere + KAV `padding`** | SDK 58 Android draws behind system bars; `behavior` must be set on both platforms |
+| D-62 | Modal safe area | Root insets only, nested provider | **Nested `SafeAreaProvider` inside `BottomSheet` with initial metrics** | Modal is a separate window; provider guarantees valid insets on Android |
+| D-63 | Keyboard height | NetInfo/third-party, RN Keyboard | **`useKeyboardHeight` with `Keyboard.addListener`** | No extra native dependency; works in Expo Go |
+| D-64 | Bottom sheet | Keep per-sheet Modal copies, one shared component | **Single `BottomSheet` for all sheets** | Consistent safe area/keyboard/footer behavior, easier audit |
+| D-65 | Sheet positioning | KAV inside Modal, absolute bottom | **Sheet bottom = keyboardHeight; maxHeight = window − keyboard − insets.top − gap** | Prevents keyboard/nav-bar overlap without double-resize |
+| D-66 | Sheet footer | Scroll with content, sticky | **Sticky footer slot** | Skip/Save/Apply always reachable |
+| D-67 | Search sheet | Small auto height, fixed 75% | **Fixed 75% height with FlatList body** | More results visible; keyboard leaves a scrollable body |
+| D-68 | Forms | KAV iOS only, manual padding | **`ScreenContainer`: KAV `padding` both platforms + bottom padding** | Fixes Android edge-to-edge keyboard overlap |
+| D-69 | Submit button | Sticky action bar, scroll reachable | **Scroll reachable with generous bottom padding** | Less layout complexity; consistent Add/Edit |
+| D-70 | FAB clipping | Increase elevation, move out of scroll | **Last-sibling absolute-fill overlay + zIndex/elevation + `collapsable={false}`** | Cards/gradients cannot draw over it; scroll padding clears it |
+| D-71 | Snackbar/FAB collision | Move FAB while snackbar visible, place snackbar above | **Snackbar above FAB/tab bar** | Simpler, no shared animation state |
+| D-72 | Rating control | Keep −/+/× row, 5 tappable stars | **5 stars with half/full tap + Clear** | Fits narrow screens; better touch UX; API unchanged |
+| D-73 | Half-star at 0.5 | Allow 0.5, clamp to 1.0 | **Clamp first star to 1.0** | DB/business rule allows rating 1.0–5.0 only |
+| D-74 | GenrePicker | Custom animated bottom sheet | **Migrate to `BottomSheet`** | One bottom-sheet implementation; safe area/keyboard consistency |
+| D-75 | YearPicker | Bottom sheet, anchored popover | **Keep anchored popover** | It is a field-attached search panel, not a bottom sheet |
+| D-76 | Tablet width | Full-width content, max width | **Max 640 dp centered for forms/sheets/lists** | Readability on tablets/foldables |
+| D-77 | Carousel size | Fixed 106 dp, computed width | **Computed from window, clamp 140–200 dp** | Readable titles and consistent 2.3-card rhythm |
+| D-78 | Font scaling | Disable globally, selective caps | **Tab labels fixed; chips/badges/buttons capped 1.3×** | Keep navigation stable while allowing content to scale |
+| D-79 | Third-party keyboard library | Add keyboard-controller/reanimated | **Not added** | Built-in RN APIs plus safe-area are sufficient; avoids Expo Go/dev-build complexity |
+| D-80 | Documentation version | 2.0, 2.1 | **Docs 2.1; app 2.1.0** | Minor UI release with measurable adaptive-layout requirements |
+
+## 8. Accepted Risks
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
@@ -130,5 +156,5 @@ These were not fully specified in the brief:
 **End of Document**
 
 Document ID: CT-DL-001\
-Version: 2.0\
+Version: 2.1\
 Project: CineTrack

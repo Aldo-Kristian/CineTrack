@@ -4,6 +4,38 @@ All notable changes to CineTrack are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project follows semantic versioning for releases.
 
+## [2.1.0] — 2026-11-28
+
+### Added
+
+- Shared `BottomSheet` with nested `SafeAreaProvider`, keyboard-aware positioning, fixed header, scrollable body, sticky footer, and max width 640 dp.
+- `ScreenContainer` for keyboard-aware form screens.
+- `useKeyboardHeight` hook (Android `keyboardDidShow/Hide`, iOS `keyboardWillShow/Hide`).
+- `src/constants/layout.js` tokens (`MAX_CONTENT_WIDTH`, FAB, sheet, tab bar, minimum touch size).
+- Manual adaptive-layout test matrix TC-027…TC-036 in `docs/04`.
+- NFR-13 Adaptive Layout in the SRS.
+
+### Changed
+
+- All bottom sheets (Find poster, Confirm Add, Filter, Action, Rating, Region, Subscription, Genre) now use the single `BottomSheet`; `ModalSheet` removed.
+- `RatingInput` replaced the −/+/× row with five tappable stars (left half = .5, right half = full), a Clear action, and accessible values.
+- Forms use `ScreenContainer` with KAV `behavior="padding"` on both platforms; focused Description scrolls above the keyboard.
+- `FloatingAddButton` is a last-sibling absolute overlay with `pointerEvents="box-none"`, high zIndex/elevation, and keyboard hiding.
+- Home/Watchlist reserve scroll bottom padding for the FAB; poster carousel width is computed from the window (140–200 dp).
+- Snackbar sits above the FAB and tab bar.
+- Tab bar hides on keyboard and disables label font scaling.
+- Content width is capped at 640 dp for forms, sheets, lists, settings, details, statistics, and backup.
+- App/package version bumped to 2.1.0; documentation revised to 2.1.
+
+### Fixed
+
+- Edit/Manual Add: keyboard no longer covers the lower form; focused Title/Description and the submit action remain reachable.
+- “Find poster & info”: sheet rises above the keyboard, keeps the search field/header visible, uses a scrollable FlatList, and no longer clips under the navigation bar.
+- “Rate this title”: Skip/Save footer is always above the navigation bar; the rating control no longer overlaps/cuts “Not rated”.
+- Home: FAB is no longer clipped or drawn under carousel cards; the last item can scroll clear of it.
+- Year picker panel accounts for the bottom navigation inset.
+- Bottom sheets respect both 3-button and gesture navigation insets.
+
 ## [2.0.0] — 2026-11-28
 
 ### Added

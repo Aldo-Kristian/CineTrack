@@ -1,7 +1,7 @@
 # CineTrack — Implementation Plan
 
 **Document ID:** CT-IMP-001\
-**Version:** 2.0\
+**Version:** 2.1\
 **Status:** Final\
 **Phase:** 4 — Implementation Planning\
 **Baseline:** Phase 3 — System Design\
@@ -11,6 +11,7 @@
 
 | Version | Date | Summary | Reason |
 | --- | --- | --- | --- |
+| 2.1 | 2026-11-28 | Added M21 Responsive/Adaptive UI Fix; shared BottomSheet, ScreenContainer, keyboard hook, layout tokens, FAB layering | Perbaikan responsive UI |
 | 2.0 | 2026-11-28 | New dependencies, DB v2, TMDB/provider services, milestones M14–M20, real implementation status, QA results | Lecturer consultation + UX fixes |
 | 1.0 | 2026-11-25 | Initial implementation plan | Project setup |
 
@@ -180,8 +181,9 @@ Rules:
 | M18 | Home, Watchlist, Detail UX | Must | FR-01, FR-07…FR-09, FR-12, FR-13, FR-17, FR-18, FR-20, FR-21 | Done |
 | M19 | Settings, enrichment, background refresh | Should | FR-22, FR-23 | Done |
 | M20 | Documentation & QA | Must | NFR-08, NFR-10 | Done |
+| M21 | Responsive/Adaptive UI Fix | Must | NFR-13, FR-10, FR-17, FR-18 | Done (code/bundle; device matrix pending) |
 
-### M14–M20 Details
+### M14–M21 Details
 
 **M14 — Database v2**
 
@@ -233,6 +235,17 @@ Rules:
 - Lint, tests, doctor, install check, Android export.
 - DB migration verification with `node:sqlite`.
 
+**M21 — Responsive/Adaptive UI Fix**
+
+- Shared `BottomSheet` with nested SafeAreaProvider, keyboard height, sticky footer, max width.
+- Shared `ScreenContainer` for keyboard-aware forms.
+- `useKeyboardHeight`, `layout.js` tokens.
+- Safe-area audit for tab bar, snackbar, FAB, YearPicker, content width.
+- FAB absolute-fill overlay with high z-order/elevation and scroll clearance.
+- RatingInput redesigned to 5 tappable stars (half/full) + Clear.
+- Responsive poster carousel width, max content width 640, font-scaling guards.
+- Documents updated to 2.1; device matrix TC-027…TC-036 pending user testing.
+
 ## 8. Git Workflow
 
 Actual v2 commits (oldest → newest):
@@ -283,5 +296,5 @@ Rules:
 **End of Document**
 
 Document ID: CT-IMP-001\
-Version: 2.0\
+Version: 2.1\
 Project: CineTrack

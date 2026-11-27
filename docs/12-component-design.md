@@ -1,7 +1,7 @@
 # CineTrack — Component Design
 
 **Document ID:** CT-CD-001\
-**Version:** 2.0\
+**Version:** 2.1\
 **Status:** Final\
 **Phase:** 3 — System Design\
 **Project:** CineTrack\
@@ -11,6 +11,7 @@
 
 | Version | Date | Summary | Reason |
 | --- | --- | --- | --- |
+| 2.1 | 2026-11-28 | Added BottomSheet, ScreenContainer, useKeyboardHeight, layout tokens; migrated sheets; redesigned RatingInput; updated FAB | Perbaikan responsive UI |
 | 2.0 | 2026-11-28 | Added poster/provider/card/sheet/settings components, BrandLogo branding, genre theme table, updated folder structure and navigation | Lecturer consultation + UX fixes |
 | 1.0 | 2026-11-25 | Initial component and folder design | Project setup |
 
@@ -92,7 +93,8 @@ All variants show: title, type · year, rating, status, max 2 genre chips, and a
 
 | Component | Responsibility |
 | --- | --- |
-| `ModalSheet` | Shared bottom sheet (`Modal`, handle, title, close, scroll, keyboard avoidance) |
+| `BottomSheet` | Single shared bottom sheet: Modal + nested SafeAreaProvider, backdrop, handle, fixed header, scrollable body, sticky footer, keyboard-aware positioning, max-width 640 |
+| `ScreenContainer` | Keyboard-aware scroll wrapper for forms (KAV `padding`, safe-area bottom, max-width 640) |
 | `ConfirmAddSheet` | Poster/title/year/genres/synopsis + status + optional rating + Add |
 | `FilterSheet` | Type/status/genre/sort with Reset/Apply |
 | `ActionSheet` | Generic action list with icons/submenus/destructive styling |
@@ -114,10 +116,10 @@ All variants show: title, type · year, rating, status, max 2 genre chips, and a
 | `SearchBar` | Search input with clear button and optional autofocus |
 | `ActiveFilterChips` | Removable active-filter chips |
 | `EmptyState` | Title/message + optional CTA |
-| `FloatingAddButton` | Global + button |
+| `FloatingAddButton` | Global + button in an absolute-fill `pointerEvents="box-none"` overlay with high zIndex/elevation; hides when keyboard opens |
 | `GenrePicker` | Multi-select genre bottom sheet |
 | `YearPicker` | Searchable year panel |
-| `RatingInput` | 1–5 rating stepper (0.5) |
+| `RatingInput` | 5 tappable stars (left half = .5, right = full), Clear button, accessible value; minimum 1.0 |
 
 ### 3.6 Hooks
 
@@ -128,6 +130,7 @@ All variants show: title, type · year, rating, status, max 2 genre chips, and a
 | `useDebouncedValue` | 400 ms debounce for search |
 | `useTmdbSearch` | Cancellable TMDB search state machine |
 | `useSnackbar` | Access snackbar context |
+| `useKeyboardHeight` | Current keyboard height via `keyboardWillShow/Hide` (iOS) or `keyboardDidShow/Hide` (Android), listeners cleaned on unmount |
 
 ### 3.7 Branding — `BrandLogo`
 
@@ -187,7 +190,9 @@ Theme shape: `{ variant, accent, gradient: [from, to], icon, radius }`.
 - **Pure services:** mapping/normalization/filter functions are unit-testable.
 - **Single request gateway:** `tmdbClient` centralizes timeout/retry/auth errors.
 - **Context actions:** screens call `addFromTmdb`, `refreshProviders`, `enrichItems`, etc.; they never import a `fetch` wrapper.
-- **Modal sheets:** native `Modal` only; no reanimated or external sheet library.
+- **Modal sheets:** native `Modal` + `BottomSheet` only; no reanimated or external sheet library.
+- **Safe areas:** every edge-attached element uses `react-native-safe-area-context`; Modal sheets wrap content in a nested `SafeAreaProvider` with initial metrics.
+- **Keyboard:** forms use `ScreenContainer`; all sheets use `useKeyboardHeight` and position above the keyboard.
 - **Accessibility:** 44 dp minimum touch targets; icon buttons have labels.
 - **Memoization:** cards are memoized; images use `recyclingKey` + disk cache.
 
@@ -218,7 +223,7 @@ src/
 │   ├── MediaCardPoster.js
 │   ├── MediaCardVibrant.js
 │   ├── MediaForm.js
-│   ├── ModalSheet.js
+│   ├── BottomSheet.js
 │   ├── OfflineBanner.js
 │   ├── PosterCarousel.js
 │   ├── PosterImage.js
@@ -231,6 +236,7 @@ src/
 │   ├── RatingInput.js
 │   ├── RatingSheet.js
 │   ├── RegionPicker.js
+│   ├── ScreenContainer.js
 │   ├── SearchBar.js
 │   ├── StatusBadge.js
 │   ├── StatusSegmented.js
@@ -244,6 +250,7 @@ src/
 │   ├── colors.js
 │   ├── genres.js
 │   ├── genreThemes.js
+│   ├── layout.js
 │   ├── mediaOptions.js
 │   ├── spacing.js
 │   ├── streamingProviders.js
@@ -259,6 +266,7 @@ src/
 ├── hooks/
 │   ├── useCardMedia.js
 │   ├── useDebouncedValue.js
+│   ├── useKeyboardHeight.js
 │   ├── useMedia.js
 │   ├── useSnackbar.js
 │   └── useTmdbSearch.js
@@ -295,6 +303,7 @@ src/
 | `StatusFilter.js` | Removed | Replaced by `FilterSheet` |
 | `SortSelector.js` | Removed | Replaced by `FilterSheet` |
 | `utils/alerts.js` | Removed | Delete confirmations are screen-specific (with Undo) |
+| `ModalSheet.js` | Removed | Superseded by the single `BottomSheet` implementation |
 | `BackupScreen.js.bak` | Removed | Unused legacy backup file |
 | `GenreChip` / `GenreList` | Kept | Still used by cards/details/picker |
 | `GenrePicker` | Kept | Used in manual/edit form |
@@ -325,5 +334,5 @@ docs/
 **End of Document**
 
 Document ID: CT-CD-001\
-Version: 2.0\
+Version: 2.1\
 Project: CineTrack

@@ -4,18 +4,18 @@
 
 # CineTrack
 
-**Personal Film & Series Tracker — Version 2.0**
+**Personal Film & Series Tracker — Version 2.1**
 
 ![Platform](https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white)
 ![React Native](https://img.shields.io/badge/React%20Native-Expo-6C4DF6?logo=expo&logoColor=white)
 ![Database](https://img.shields.io/badge/database-SQLite-003B57?logo=sqlite&logoColor=white)
 ![Language](https://img.shields.io/badge/language-JavaScript-F7DF1E?logo=javascript&logoColor=black)
-![Status](https://img.shields.io/badge/status-2.0.0%20stable-brightgreen)
+![Status](https://img.shields.io/badge/status-2.1.0%20stable-brightgreen)
 ![Tests](https://img.shields.io/badge/tests-jest--expo-99424F?logo=jest&logoColor=white)
 
 CineTrack is an offline-first mobile app for managing the movies and TV series you want to watch, are currently watching, or have already finished. The collection lives on the device in SQLite. TMDB is an **optional enrichment layer**: search a title once, and CineTrack fills in the poster, backdrop, genres, year, synopsis, and legal streaming providers. If the network or API token is unavailable, every core feature still works.
 
-> **Version 2.0.** New in this release: search-first add flow, automatic posters, genre-themed cards, where-to-watch data, Settings (region + subscriptions), data enrichment for old titles, and backup v2.
+> **Version 2.1.** Responsive/adaptive UI release: edge-to-edge safe areas, shared keyboard-aware bottom sheets, keyboard-aware forms, FAB layering, and a star-based rating control. Version 2.0 introduced search-first add, automatic posters, genre-themed cards, where-to-watch data, Settings, enrichment, and backup v2.
 
 ## Table of Contents
 
@@ -427,6 +427,24 @@ TMDB and JustWatch trademarks belong to their respective owners. The app display
 
 ---
 
+## Known Limitations & Tested Devices
+
+**Layout behavior**
+
+- Android is edge-to-edge: screens apply safe-area insets for status/navigation bars, and the tab bar owns its bottom inset.
+- All bottom sheets use the shared `BottomSheet` (`Modal` + nested `SafeAreaProvider` + keyboard height + sticky footer + max width 640).
+- Form screens use `ScreenContainer` (KAV `behavior="padding"` on Android and iOS). The FAB is a last-sibling absolute overlay with high z-order/elevation and is hidden while the keyboard is open.
+- Content is capped at `MAX_CONTENT_WIDTH` (640 dp) on tablets/foldables; carousel cards are computed from `useWindowDimensions` (140–200 dp).
+- Snackbar sits above the FAB and tab bar.
+
+**What was actually verified**
+
+- `npx expo lint`, `npm test`, `npx expo-doctor`, `npx expo install --check`, and `npx expo export --platform android` on Linux.
+- Database migration and unique-index tests with `node:sqlite`.
+- Mermaid/document-link validation.
+- No physical Android device or emulator was attached to the development environment. The four bug reports were reproduced from the user’s Android screenshots (3-button navigation, portrait, 720×1600 px).
+- Not yet device-verified: gesture navigation, system font size “Largest”, display size “Largest”, small 360×640 dp screens, tablet/foldable widths, 100+ item scroll performance, and the live keyboard/sheet matrix. These are tracked as TC-027…TC-036 in [`docs/04-requirement-traceability.md`](docs/04-requirement-traceability.md).
+
 ## Development Workflow
 
 - `main` contains a stable version.
@@ -447,6 +465,7 @@ npx expo export --platform android
 
 | Version | Date | Summary | Reason |
 | --- | --- | --- | --- |
+| 2.1.0 | 2026-11-28 | Responsive/adaptive layout: shared BottomSheet, ScreenContainer, keyboard hook, safe-area audit, FAB layering, star rating, max-width and font-scaling guards | Perbaikan responsive UI |
 | 2.0.0 | 2026-11-28 | Search-first add, TMDB metadata/posters/providers, genre-themed cards, Home/Watchlist/Detail redesign, Settings, enrichment, backup v2, branding/logo, full docs revision | Lecturer consultation + UX fixes |
 | 1.0.0 | 2026-11-25 | Initial offline CRUD, search/filter/sort, rating, statistics, backup | Initial release |
 
@@ -458,4 +477,4 @@ This project is developed for academic and learning purposes. Add a license of y
 
 ---
 
-**CineTrack 2.0** — built with React Native, Expo, SQLite, and optional TMDB enrichment.
+**CineTrack 2.1** — built with React Native, Expo, SQLite, and optional TMDB enrichment.

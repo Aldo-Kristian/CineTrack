@@ -3,7 +3,7 @@
 ## CineTrack — Personal Film & Series Tracker
 
 **Document ID:** CT-SRS-001\
-**Version:** 2.0\
+**Version:** 2.1\
 **Status:** Final\
 **Platform:** Android (React Native + Expo)\
 **Database:** SQLite (local) + optional TMDB API v3\
@@ -13,6 +13,7 @@
 
 | Version | Date | Summary | Reason |
 | --- | --- | --- | --- |
+| 2.1 | 2026-11-28 | Added NFR-13 Adaptive Layout and measurable safe-area, keyboard, sizing, font-scaling, and touch-target criteria | Perbaikan responsive UI |
 | 2.0 | 2026-11-28 | Added FR-14…FR-24, revised NFR-01, external TMDB interface, provider/attribution/offline rules, acceptance criteria | Lecturer consultation + UX fixes |
 | 1.0 | 2026-11-25 | Initial offline-only SRS | Project setup |
 
@@ -22,7 +23,7 @@
 
 ## 1.1 Purpose
 
-This document defines the functional and non-functional requirements of CineTrack 2.0, a mobile application that helps users organize a personal movie and TV-series watchlist and optionally enrich it with metadata from TMDB.
+This document defines the functional and non-functional requirements of CineTrack 2.1, a mobile application that helps users organize a personal movie and TV-series watchlist and optionally enrich it with metadata from TMDB.
 
 The SRS is the primary reference for design, implementation, and testing.
 
@@ -424,6 +425,25 @@ Cards are memoized. FlatList uses `initialNumToRender`, `windowSize`, `maxToRend
 
 The `EXPO_PUBLIC_TMDB_TOKEN` is bundled in the client. This is an accepted academic risk. Documentation must state the risk and the backend-proxy alternative.
 
+## 4.13 Adaptive Layout
+
+**NFR-13**
+
+The UI must remain usable and unclipped across Android edge-to-edge system bars, keyboard states, small/large screens, and system font scaling.
+
+Acceptance criteria:
+
+- Every element attached to a screen edge uses safe-area insets. Content is not obscured by a 3-button navigation bar (±48 dp) or gesture navigation (±16–24 dp).
+- Every bottom sheet uses the shared `BottomSheet`, rises above the keyboard, and keeps its footer actions above the navigation bar/keyboard.
+- The “Find poster & info” sheet keeps its search field and as many result rows as fit visible above the keyboard; at 360×640 dp with the keyboard open, at least 2 result cards are visible.
+- Form fields (Title and Description) remain visible when focused; the submit action is reachable by scrolling; content below “More details (optional)” is not clipped.
+- The FAB is never clipped or covered by cards, sits above the tab bar, and the last list item can scroll clear of it.
+- Text and controls remain usable at system font scale 1.5×; limited-space chips/badges/buttons use `numberOfLines` and `maxFontSizeMultiplier` ≤ 1.3.
+- Forms and sheets are centered with a maximum content width of 640 dp on tablets/foldables; lists do not stretch absurdly.
+- Interactive targets are at least 44×44 dp and icon-only buttons expose accessibility labels.
+- Snackbar does not overlap the FAB or tab bar.
+- Only one bottom-sheet implementation exists.
+
 ---
 
 # 5. Data Requirements
@@ -553,8 +573,10 @@ The application satisfies v2 when:
 14. Backup v2 exports/imports; v1 backups still import.
 15. “Complete my existing titles automatically” follows the exact-match rule and never overwrites without consent.
 16. Lint, tests, doctor, and Android export pass; no SQL/fetch in screens/components.
-17. All v2.0 documents are consistent with the code and describe the optional online enrichment accurately.
+17. All v2.1 documents are consistent with the code and describe the optional online enrichment accurately.
 18. README roadmap reflects the real status; AGENTS describes React Navigation and the actual layered structure.
+19. No UI element is obscured by status/navigation bars in 3-button or gesture mode.
+20. Bottom sheets and forms remain usable with the keyboard open; the FAB is never clipped; the UI is usable at 1.5× font scale and on small/large screens.
 
 ---
 
@@ -575,5 +597,5 @@ The application satisfies v2 when:
 **End of Document**
 
 Document ID: CT-SRS-001\
-Version: 2.0\
+Version: 2.1\
 Project: CineTrack
