@@ -14,7 +14,7 @@ import typography from '../constants/typography';
 import spacing from '../constants/spacing';
 import { KNOWN_PROVIDERS } from '../constants/streamingProviders';
 import useMedia from '../hooks/useMedia';
-import ModalSheet from './ModalSheet';
+import BottomSheet from './BottomSheet';
 import ProviderLogo from './ProviderLogo';
 
 const SubscriptionPicker = ({ visible, value, region, onClose, onSave }) => {
@@ -79,10 +79,31 @@ const SubscriptionPicker = ({ visible, value, region, onClose, onSave }) => {
   };
 
   return (
-    <ModalSheet
+    <BottomSheet
       visible={visible}
       onClose={onClose}
       title={`My streaming subscriptions · ${region}`}
+      footer={
+        <View style={styles.actions}>
+          <Pressable
+            style={styles.clear}
+            onPress={() => setSelected([])}
+            accessibilityRole="button"
+            accessibilityLabel="Clear subscriptions"
+          >
+            <Text style={styles.clearText}>Clear</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.save}
+            onPress={() => onSave(selected)}
+            accessibilityRole="button"
+            accessibilityLabel="Save subscriptions"
+          >
+            <Text style={styles.saveText}>Save</Text>
+          </Pressable>
+        </View>
+      }
     >
       <Text style={styles.help}>
         Selected services are prioritized for the “Open on …” button on
@@ -137,26 +158,7 @@ const SubscriptionPicker = ({ visible, value, region, onClose, onSave }) => {
         );
       })}
 
-      <View style={styles.actions}>
-        <Pressable
-          style={styles.clear}
-          onPress={() => setSelected([])}
-          accessibilityRole="button"
-          accessibilityLabel="Clear subscriptions"
-        >
-          <Text style={styles.clearText}>Clear</Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.save}
-          onPress={() => onSave(selected)}
-          accessibilityRole="button"
-          accessibilityLabel="Save subscriptions"
-        >
-          <Text style={styles.saveText}>Save</Text>
-        </Pressable>
-      </View>
-    </ModalSheet>
+    </BottomSheet>
   );
 };
 

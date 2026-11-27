@@ -5,7 +5,7 @@ import { Check } from 'lucide-react-native';
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
-import ModalSheet from './ModalSheet';
+import BottomSheet from './BottomSheet';
 
 export const COUNTRY_OPTIONS = [
   { code: 'ID', name: 'Indonesia' },
@@ -57,7 +57,45 @@ const RegionPicker = ({ visible, value, onClose, onSelect }) => {
   const customValid = /^[A-Z]{2}$/.test(customCode);
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} title="Streaming region">
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="Streaming region"
+      footer={
+        <View style={styles.customBox}>
+          <Text style={styles.customTitle}>Other country code</Text>
+          <View style={styles.customRow}>
+            <TextInput
+              style={[styles.input, styles.customInput]}
+              value={custom}
+              onChangeText={(text) =>
+                setCustom(
+                  text.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase()
+                )
+              }
+              placeholder="e.g. ID"
+              placeholderTextColor={colors.textMuted}
+              selectionColor={colors.primary}
+              autoCapitalize="characters"
+              maxLength={2}
+            />
+
+            <Pressable
+              style={[styles.useButton, !customValid && styles.disabled]}
+              disabled={!customValid}
+              onPress={() => {
+                onSelect(customCode);
+                onClose();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Use custom country code"
+            >
+              <Text style={styles.useText}>Use</Text>
+            </Pressable>
+          </View>
+        </View>
+      }
+    >
       <Text style={styles.help}>
         Providers and availability are fetched for this country. Use the
         ISO 3166-1 two-letter code.
@@ -96,37 +134,7 @@ const RegionPicker = ({ visible, value, onClose, onSelect }) => {
         );
       })}
 
-      <View style={styles.customBox}>
-        <Text style={styles.customTitle}>Other country code</Text>
-        <View style={styles.customRow}>
-          <TextInput
-            style={[styles.input, styles.customInput]}
-            value={custom}
-            onChangeText={(text) =>
-              setCustom(text.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase())
-            }
-            placeholder="e.g. ID"
-            placeholderTextColor={colors.textMuted}
-            selectionColor={colors.primary}
-            autoCapitalize="characters"
-            maxLength={2}
-          />
-
-          <Pressable
-            style={[styles.useButton, !customValid && styles.disabled]}
-            disabled={!customValid}
-            onPress={() => {
-              onSelect(customCode);
-              onClose();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Use custom country code"
-          >
-            <Text style={styles.useText}>Use</Text>
-          </Pressable>
-        </View>
-      </View>
-    </ModalSheet>
+    </BottomSheet>
   );
 };
 
@@ -174,7 +182,6 @@ const styles = StyleSheet.create({
 
   customBox: {
     gap: spacing.sm,
-    paddingTop: spacing.md,
   },
 
   customTitle: {

@@ -7,7 +7,7 @@ import spacing from '../constants/spacing';
 import { mapTmdbSearchResult } from '../services/tmdbMapper';
 import PosterImage from './PosterImage';
 
-const TmdbSearchResultItem = ({ result, inCollection, onPress }) => {
+const TmdbSearchResultItem = ({ result, inCollection, onPress, compact = false }) => {
   const mapped = mapTmdbSearchResult(result);
 
   return (
@@ -16,6 +16,7 @@ const TmdbSearchResultItem = ({ result, inCollection, onPress }) => {
       disabled={inCollection}
       style={({ pressed }) => [
         styles.row,
+        compact && styles.rowCompact,
         pressed && !inCollection && styles.pressed,
         inCollection && styles.disabled,
       ]}
@@ -24,7 +25,11 @@ const TmdbSearchResultItem = ({ result, inCollection, onPress }) => {
         inCollection ? ', already in collection' : ''
       }`}
     >
-      <PosterImage media={mapped} style={styles.poster} size="w185" />
+      <PosterImage
+        media={mapped}
+        style={[styles.poster, compact && styles.posterCompact]}
+        size="w185"
+      />
 
       <View style={styles.info}>
         <Text style={styles.title} numberOfLines={2}>
@@ -68,6 +73,13 @@ const styles = StyleSheet.create({
     minHeight: 92,
   },
 
+  rowCompact: {
+    minHeight: 68,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    gap: spacing.sm,
+  },
+
   pressed: {
     backgroundColor: colors.surfaceSecondary,
   },
@@ -80,6 +92,10 @@ const styles = StyleSheet.create({
     width: 48,
     aspectRatio: 2 / 3,
     borderRadius: 6,
+  },
+
+  posterCompact: {
+    width: 40,
   },
 
   info: {

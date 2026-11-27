@@ -4,18 +4,42 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
-import ModalSheet from './ModalSheet';
+import BottomSheet from './BottomSheet';
 import RatingInput from './RatingInput';
 
 const RatingSheet = ({ visible, media, onClose, onSave, isSaving = false }) => {
   const [rating, setRating] = useState(media?.rating ?? null);
 
   return (
-    <ModalSheet
+    <BottomSheet
       visible={visible}
       onClose={onClose}
       title="Rate this title"
       scrollable={false}
+      footer={
+        <View style={styles.actions}>
+          <Pressable
+            style={styles.skip}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Skip rating"
+          >
+            <Text style={styles.skipText}>Skip</Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.save, isSaving && styles.disabled]}
+            onPress={() => onSave(rating)}
+            disabled={isSaving}
+            accessibilityRole="button"
+            accessibilityLabel="Save rating"
+          >
+            <Text style={styles.saveText}>
+              {isSaving ? 'Saving...' : 'Save rating'}
+            </Text>
+          </Pressable>
+        </View>
+      }
     >
       <Text style={styles.title} numberOfLines={2}>
         {media?.title}
@@ -26,29 +50,7 @@ const RatingSheet = ({ visible, media, onClose, onSave, isSaving = false }) => {
 
       <RatingInput value={rating} onChange={setRating} />
 
-      <View style={styles.actions}>
-        <Pressable
-          style={styles.skip}
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel="Skip rating"
-        >
-          <Text style={styles.skipText}>Skip</Text>
-        </Pressable>
-
-        <Pressable
-          style={[styles.save, isSaving && styles.disabled]}
-          onPress={() => onSave(rating)}
-          disabled={isSaving}
-          accessibilityRole="button"
-          accessibilityLabel="Save rating"
-        >
-          <Text style={styles.saveText}>
-            {isSaving ? 'Saving...' : 'Save rating'}
-          </Text>
-        </Pressable>
-      </View>
-    </ModalSheet>
+    </BottomSheet>
   );
 };
 

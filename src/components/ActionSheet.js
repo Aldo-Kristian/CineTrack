@@ -5,10 +5,10 @@ import { ChevronRight } from 'lucide-react-native';
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
-import ModalSheet from './ModalSheet';
+import BottomSheet from './BottomSheet';
 
 const ActionSheet = ({ visible, title, message, options = [], onClose }) => (
-  <ModalSheet
+  <BottomSheet
     visible={visible}
     onClose={onClose}
     title={title}
@@ -45,7 +45,7 @@ const ActionSheet = ({ visible, title, message, options = [], onClose }) => (
         </Pressable>
       ))}
     </View>
-  </ModalSheet>
+  </BottomSheet>
 );
 
 export default ActionSheet;

@@ -10,7 +10,7 @@ import {
   MEDIA_STATUSES,
   MEDIA_TYPES,
 } from '../constants/mediaOptions';
-import ModalSheet from './ModalSheet';
+import BottomSheet from './BottomSheet';
 
 const DEFAULT_FILTERS = {
   type: 'ALL',
@@ -27,7 +27,11 @@ const OptionChip = ({ label, selected, onPress }) => (
     accessibilityState={{ selected }}
     accessibilityLabel={label}
   >
-    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+    <Text
+      style={[styles.chipText, selected && styles.chipTextSelected]}
+      numberOfLines={1}
+      maxFontSizeMultiplier={1.3}
+    >
       {label}
     </Text>
   </Pressable>
@@ -47,7 +51,32 @@ const FilterSheet = ({ visible, filters, onClose, onApply }) => {
     setDraft((current) => ({ ...current, [field]: value }));
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} title="Filter & Sort">
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="Filter & Sort"
+      footer={
+        <View style={styles.actions}>
+          <Pressable
+            style={styles.reset}
+            onPress={() => setDraft({ ...DEFAULT_FILTERS })}
+            accessibilityRole="button"
+            accessibilityLabel="Reset filters"
+          >
+            <Text style={styles.resetText}>Reset</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.apply}
+            onPress={() => onApply(draft)}
+            accessibilityRole="button"
+            accessibilityLabel="Apply filters"
+          >
+            <Text style={styles.applyText}>Apply</Text>
+          </Pressable>
+        </View>
+      }
+    >
       <FilterSection title="Type">
         {[{ label: 'All', value: 'ALL' }, ...MEDIA_TYPES].map((item) => (
           <OptionChip
@@ -92,26 +121,7 @@ const FilterSheet = ({ visible, filters, onClose, onApply }) => {
         ))}
       </FilterSection>
 
-      <View style={styles.actions}>
-        <Pressable
-          style={styles.reset}
-          onPress={() => setDraft({ ...DEFAULT_FILTERS })}
-          accessibilityRole="button"
-          accessibilityLabel="Reset filters"
-        >
-          <Text style={styles.resetText}>Reset</Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.apply}
-          onPress={() => onApply(draft)}
-          accessibilityRole="button"
-          accessibilityLabel="Apply filters"
-        >
-          <Text style={styles.applyText}>Apply</Text>
-        </Pressable>
-      </View>
-    </ModalSheet>
+    </BottomSheet>
   );
 };
 

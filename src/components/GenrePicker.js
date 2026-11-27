@@ -1,17 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  Pressable,
-  ScrollView,
-  Animated,
-  Easing,
-  Dimensions,
-  StyleSheet,
-  useWindowDimensions,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useState } from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
 
 import colors from '../constants/colors';
@@ -24,25 +12,10 @@ import {
 } from '../constants/genres';
 import GenreChip from './GenreChip';
 import GenreList from './GenreList';
-
-const SLIDE_DISTANCE = Dimensions.get('screen').height;
+import BottomSheet from './BottomSheet';
 
 const GenrePicker = ({ value, onChange }) => {
   const [visible, setVisible] = useState(false);
-  const { height } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-
-  // Animated.Value disimpan di state (bukan ref) supaya aman dibaca saat render
-  // dan tidak melanggar aturan React Compiler tentang akses ref.
-  const [translateY] = useState(() => new Animated.Value(SLIDE_DISTANCE));
-  const isClosing = useRef(false);
-
-  const backdropOpacity = translateY.interpolate({
-    inputRange: [0, SLIDE_DISTANCE],
-    outputRange: [1, 0],
-    extrapolate: 'clamp',
-  });
-
   const selected = parseGenres(value);
 
   // Genre lama di luar daftar tetap ditampilkan agar bisa dilepas.
@@ -61,51 +34,13 @@ const GenrePicker = ({ value, onChange }) => {
   };
 
   const clearAll = () => onChange('');
-
-  const open = () => {
-    isClosing.current = false;
-    translateY.setValue(SLIDE_DISTANCE);
-    setVisible(true);
-  };
-
-  // Slide ke bawah dulu, baru Modal dilepas.
-  const close = () => {
-    if (isClosing.current) {
-      return;
-    }
-
-    isClosing.current = true;
-
-    Animated.timing(translateY, {
-      toValue: SLIDE_DISTANCE,
-      duration: 200,
-      easing: Easing.in(Easing.cubic),
-      useNativeDriver: true,
-    }).start(() => setVisible(false));
-  };
-
-  // Animasi masuk setiap kali Modal tampil.
-  useEffect(() => {
-    if (!visible) {
-      return;
-    }
-
-    Animated.timing(translateY, {
-      toValue: 0,
-      duration: 240,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  }, [visible, translateY]);
-
-  // Geser handle / judul ke bawah untuk menutup sheet.
-  // (Drag-to-dismiss tidak dipakai agar animasi tetap sederhana & stabil.)
+  const close = () => setVisible(false);
 
   return (
     <>
       <Pressable
         style={styles.field}
-        onPress={open}
+        onPress={() => setVisible(true)}
         accessibilityRole="button"
         accessibilityLabel="Choose genres"
       >
@@ -120,82 +55,51 @@ const GenrePicker = ({ value, onChange }) => {
         <ChevronDown size={20} color={colors.textMuted} />
       </Pressable>
 
-      <Modal
+      <BottomSheet
         visible={visible}
-        transparent
-        animationType="none"
-        statusBarTranslucent
-        navigationBarTranslucent
-        onRequestClose={close}
-      >
-        <View style={styles.overlay}>
-          {/* Tap area gelap di luar sheet = tutup */}
-          <Animated.View
-            style={[styles.backdrop, { opacity: backdropOpacity }]}
-          >
+        onClose={close}
+        title="Select genres"
+        headerContent={
+          <Text style={styles.count}>{selected.length} selected</Text>
+        }
+        footer={
+          <View style={styles.footer}>
             <Pressable
-              style={StyleSheet.absoluteFill}
-              onPress={close}
-              accessibilityLabel="Close genre picker"
-            />
-          </Animated.View>
-
-          <Animated.View
-            style={[
-              styles.sheet,
-              {
-                maxHeight: height * 0.75,
-                paddingBottom: spacing.lg + insets.bottom,
-                transform: [{ translateY }],
-              },
-            ]}
-          >
-            {/* Area handle + judul */}
-            <View style={styles.dragZone}>
-              <View style={styles.handle} />
-
-              <View style={styles.sheetHeader}>
-                <Text style={styles.sheetTitle}>Select genres</Text>
-                <Text style={styles.sheetCount}>
-                  {selected.length} selected
-                </Text>
-              </View>
-            </View>
-
-            <ScrollView
-              contentContainerStyle={styles.board}
-              showsVerticalScrollIndicator={false}
+              style={[
+                styles.clearButton,
+                selected.length === 0 && styles.disabledButton,
+              ]}
+              onPress={clearAll}
+              disabled={selected.length === 0}
+              accessibilityRole="button"
+              accessibilityLabel="Clear genres"
             >
-              {options.map((genre) => (
-                <GenreChip
-                  key={genre}
-                  label={genre}
-                  size="md"
-                  selected={selected.includes(genre)}
-                  onPress={() => toggleGenre(genre)}
-                />
-              ))}
-            </ScrollView>
+              <Text style={styles.clearText}>Clear</Text>
+            </Pressable>
 
-            <View style={styles.footer}>
-              <Pressable
-                style={[
-                  styles.clearButton,
-                  selected.length === 0 && styles.disabledButton,
-                ]}
-                onPress={clearAll}
-                disabled={selected.length === 0}
-              >
-                <Text style={styles.clearText}>Clear</Text>
-              </Pressable>
-
-              <Pressable style={styles.doneButton} onPress={close}>
-                <Text style={styles.doneText}>Done</Text>
-              </Pressable>
-            </View>
-          </Animated.View>
+            <Pressable
+              style={styles.doneButton}
+              onPress={close}
+              accessibilityRole="button"
+              accessibilityLabel="Done selecting genres"
+            >
+              <Text style={styles.doneText}>Done</Text>
+            </Pressable>
+          </View>
+        }
+      >
+        <View style={styles.board}>
+          {options.map((genre) => (
+            <GenreChip
+              key={genre}
+              label={genre}
+              size="md"
+              selected={selected.includes(genre)}
+              onPress={() => toggleGenre(genre)}
+            />
+          ))}
         </View>
-      </Modal>
+      </BottomSheet>
     </>
   );
 };
@@ -226,52 +130,7 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.md,
   },
 
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-  },
-
-  sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    gap: spacing.lg,
-  },
-
-  dragZone: {
-    gap: spacing.lg,
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.xs,
-  },
-
-  handle: {
-    alignSelf: 'center',
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.border,
-  },
-
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-  },
-
-  sheetTitle: {
-    color: colors.text,
-    fontSize: typography.fontSize.lg,
-    fontWeight: typography.fontWeight.bold,
-  },
-
-  sheetCount: {
+  count: {
     color: colors.textSecondary,
     fontSize: typography.fontSize.sm,
   },
@@ -280,6 +139,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
+    paddingBottom: spacing.sm,
   },
 
   footer: {
@@ -289,11 +149,12 @@ const styles = StyleSheet.create({
 
   clearButton: {
     flex: 1,
+    minHeight: 48,
     alignItems: 'center',
-    borderRadius: 6,
+    justifyContent: 'center',
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingVertical: spacing.md,
   },
 
   clearText: {
@@ -304,10 +165,11 @@ const styles = StyleSheet.create({
 
   doneButton: {
     flex: 2,
+    minHeight: 48,
     alignItems: 'center',
-    borderRadius: 6,
+    justifyContent: 'center',
+    borderRadius: 8,
     backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
   },
 
   doneText: {

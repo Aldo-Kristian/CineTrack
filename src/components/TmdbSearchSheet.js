@@ -1,12 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
+import { X } from 'lucide-react-native';
 
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
+import { SHEET_SEARCH_HEIGHT_RATIO } from '../constants/layout';
 import useMedia from '../hooks/useMedia';
 import useTmdbSearch from '../hooks/useTmdbSearch';
-import ModalSheet from './ModalSheet';
+import BottomSheet from './BottomSheet';
 import SearchBar from './SearchBar';
 import OfflineBanner from './OfflineBanner';
 import TmdbSearchResultItem from './TmdbSearchResultItem';
@@ -17,69 +26,137 @@ const TmdbSearchSheet = ({ visible, onClose, onSelect }) => {
   const [query, setQuery] = useState('');
   const { status, results, errorMessage } = useTmdbSearch(query);
 
-  return (
-    <ModalSheet visible={visible} onClose={onClose} title="Find poster & info">
-      <SearchBar
-        value={query}
-        onChangeText={setQuery}
-        placeholder="Search movie or series..."
-        autoFocus
-      />
+  const renderEmpty = () => {
+    if (status === 'loading') {
+      return <ActivityIndicator color={colors.primaryLight} />;
+    }
 
+    if (status === 'idle') {
+      return (
+        <Text style={styles.hint}>Type at least 2 characters.</Text>
+      );
+    }
+
+    if (status === 'empty') {
+      return <Text style={styles.hint}>No results. Try another title.</Text>;
+    }
+
+    if (status === 'offline' || status === 'error') {
+      return <Text style={styles.error}>{errorMessage}</Text>;
+    }
+
+    return null;
+  };
+
+  return (
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={null}
+      showClose={false}
+      showHandle={false}
+      scrollable={false}
+      heightRatio={SHEET_SEARCH_HEIGHT_RATIO}
+      bodyStyle={styles.body}
+      headerContent={
+        <View style={styles.searchRow}>
+          <SearchBar
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search movie or series..."
+            autoFocus
+            style={styles.searchBar}
+          />
+
+          <Pressable
+            onPress={onClose}
+            style={styles.closeButton}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
+            <X size={22} color={colors.textSecondary} />
+          </Pressable>
+        </View>
+      }
+    >
       {!isTmdbConfigured ? (
         <OfflineBanner message="Online search is off. Add poster manually instead." />
       ) : null}
 
-      {status === 'loading' ? (
-        <ActivityIndicator color={colors.primaryLight} style={styles.loader} />
-      ) : null}
-
-      {status === 'idle' ? (
-        <Text style={styles.hint}>Type at least 2 characters.</Text>
-      ) : null}
-
-      {status === 'empty' ? (
-        <Text style={styles.hint}>No results. Try another title.</Text>
-      ) : null}
-
-      {status === 'offline' || status === 'error' ? (
-        <Text style={styles.error}>{errorMessage}</Text>
-      ) : null}
-
-      <View style={styles.results}>
-        {results.slice(0, 12).map((result) => (
+      <FlatList
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        data={status === 'success' ? results : []}
+        keyExtractor={(item) => `${item.media_type}-${item.id}`}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => (
           <TmdbSearchResultItem
-            key={`${result.media_type}-${result.id}`}
-            result={result}
-            onPress={(item) => {
-              onSelect(item);
+            result={item}
+            compact
+            onPress={(selected) => {
+              onSelect(selected);
               onClose();
             }}
           />
-        ))}
-      </View>
-    </ModalSheet>
+        )}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ListEmptyComponent={renderEmpty}
+      />
+    </BottomSheet>
   );
 };
 
 export default TmdbSearchSheet;
 
 const styles = StyleSheet.create({
-  loader: {
-    marginTop: spacing.lg,
+  body: {
+    flex: 1,
+    gap: spacing.md,
+  },
+
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+
+  searchBar: {
+    flex: 1,
+  },
+
+  closeButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  list: {
+    flex: 1,
+  },
+
+  listContent: {
+    paddingBottom: spacing.sm,
+    flexGrow: 1,
+  },
+
+  separator: {
+    height: spacing.xs,
   },
 
   hint: {
     color: colors.textMuted,
     fontSize: typography.fontSize.sm,
+    textAlign: 'center',
+    paddingVertical: spacing.lg,
   },
 
   error: {
     color: colors.danger,
     fontSize: typography.fontSize.sm,
-  },
-
-  results: {
-    gap: spacing.sm,
+    textAlign: 'center',
+    paddingVertical: spacing.lg,
   },
 });

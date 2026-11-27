@@ -4,7 +4,7 @@ import { View, Text, Pressable, ActivityIndicator, StyleSheet } from 'react-nati
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
-import ModalSheet from './ModalSheet';
+import BottomSheet from './BottomSheet';
 import PosterImage from './PosterImage';
 import GenreList from './GenreList';
 import StatusSegmented from './StatusSegmented';
@@ -37,7 +37,28 @@ const ConfirmAddSheet = ({
   };
 
   return (
-    <ModalSheet visible={visible} onClose={onClose} title="Add to collection">
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="Add to collection"
+      footer={
+        <View style={styles.footer}>
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+
+          <Pressable
+            style={[styles.submit, isAdding && styles.disabled]}
+            onPress={() => onConfirm({ status, rating })}
+            disabled={isAdding}
+            accessibilityRole="button"
+            accessibilityLabel="Add to collection"
+          >
+            <Text style={styles.submitText}>
+              {isAdding ? 'Adding...' : 'Add to Collection'}
+            </Text>
+          </Pressable>
+        </View>
+      }
+    >
       <View style={styles.hero}>
         <PosterImage media={media} style={styles.poster} />
 
@@ -87,20 +108,7 @@ const ConfirmAddSheet = ({
         </View>
       ) : null}
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
-      <Pressable
-        style={[styles.submit, isAdding && styles.disabled]}
-        onPress={() => onConfirm({ status, rating })}
-        disabled={isAdding}
-        accessibilityRole="button"
-        accessibilityLabel="Add to collection"
-      >
-        <Text style={styles.submitText}>
-          {isAdding ? 'Adding...' : 'Add to Collection'}
-        </Text>
-      </Pressable>
-    </ModalSheet>
+    </BottomSheet>
   );
 };
 
@@ -174,6 +182,10 @@ const styles = StyleSheet.create({
   error: {
     color: colors.danger,
     fontSize: typography.fontSize.sm,
+  },
+
+  footer: {
+    gap: spacing.sm,
   },
 
   submit: {
