@@ -7,6 +7,7 @@ import ManualAddScreen from '../screens/ManualAddScreen';
 import EditMediaScreen from '../screens/EditMediaScreen';
 import MediaDetailsScreen from '../screens/MediaDetailsScreen';
 import BackupScreen from '../screens/BackupScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 
@@ -62,6 +63,12 @@ const RootNavigator = () => {
         name="Backup"
         component={BackupScreen}
         options={{ title: 'Backup & Restore' }}
+      />
+
+      <Stack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: 'Settings' }}
       />
     </Stack.Navigator>
   );
