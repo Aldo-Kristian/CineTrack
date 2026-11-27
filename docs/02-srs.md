@@ -3,11 +3,18 @@
 ## CineTrack — Personal Film & Series Tracker
 
 **Document ID:** CT-SRS-001\
-**Version:** 1.0\
-**Status:** Draft\
-**Platform:** Android\
-**Framework:** React Native + Expo\
-**Database:** SQLite (Local Storage)
+**Version:** 2.0\
+**Status:** Final\
+**Platform:** Android (React Native + Expo)\
+**Database:** SQLite (local) + optional TMDB API v3\
+**Last updated:** 2026-11-28
+
+## Revision History
+
+| Version | Date | Summary | Reason |
+| --- | --- | --- | --- |
+| 2.0 | 2026-11-28 | Added FR-14…FR-24, revised NFR-01, external TMDB interface, provider/attribution/offline rules, acceptance criteria | Lecturer consultation + UX fixes |
+| 1.0 | 2026-11-25 | Initial offline-only SRS | Project setup |
 
 ---
 
@@ -15,448 +22,558 @@
 
 ## 1.1 Purpose
 
-This document defines the functional and non-functional requirements of CineTrack, a mobile application designed to help users organize and manage their personal movie and television series watchlists.
+This document defines the functional and non-functional requirements of CineTrack 2.0, a mobile application that helps users organize a personal movie and TV-series watchlist and optionally enrich it with metadata from TMDB.
 
-The SRS serves as the primary reference for system design, implementation, and testing.
+The SRS is the primary reference for design, implementation, and testing.
 
 ## 1.2 Product Scope
 
-CineTrack allows users to manage their personal movie and series collections through basic CRUD operations.
+CineTrack lets a single local user:
 
-Users can add titles, view details, edit information, delete entries, track viewing status, search their collections, filter content, and assign personal ratings.
+- add, view, edit, and delete movies/series;
+- track To Watch / Watching / Completed status;
+- assign a personal 1–5 rating;
+- search, filter (type, status, genre), and sort the collection;
+- view statistics and export/import a JSON backup;
+- search TMDB and add a title with automatically filled poster, backdrop, genres, year, synopsis, and legal streaming providers;
+- view where to watch per region and open a legal platform page;
+- choose a region and preferred streaming subscriptions;
+- complete metadata for existing titles with automatic exact matching and a manual “Needs review” queue.
 
-All application data is stored locally using SQLite. Internet connectivity and user registration are not required.
+Core data is stored locally in SQLite. Online features are an optional enrichment layer and fail safely.
 
 ## 1.3 Intended Audience
 
-- Students and developers involved in the project.
+- Students and developers implementing the project.
 - Software testers.
-- Project evaluators.
-- Anyone reviewing the application's technical requirements.
+- Project evaluators/lecturers.
+- Anyone reviewing the technical requirements.
 
 ## 1.4 Definitions and Abbreviations
 
-| Term      | Definition                                 |
-| --------- | ------------------------------------------ |
-| SRS       | Software Requirements Specification        |
-| CRUD      | Create, Read, Update, Delete               |
-| UI        | User Interface                             |
-| SQLite    | Embedded relational database               |
-| Movie     | A standalone film                          |
-| Series    | Episodic television content                |
-| Watchlist | A collection of titles managed by the user |
-| Rating    | Personal score assigned to a title         |
+| Term | Definition |
+| --- | --- |
+| SRS | Software Requirements Specification |
+| CRUD | Create, Read, Update, Delete |
+| UI | User Interface |
+| SQLite | Embedded relational database |
+| TMDB | The Movie Database API v3 |
+| JustWatch | Provider-availability data partner used by TMDB |
+| Provider | Legal streaming/rental/purchase service (Netflix, Prime Video, …) |
+| Region | ISO 3166-1 alpha-2 country code (e.g. `ID`) |
+| TTL | Time to live; provider cache is stale after 7 days |
+| Enrichment | Filling metadata/poster/providers for a title |
+| Exact match | Same title (case-insensitive), same type, and compatible year |
+| Needs review | Enrichment candidates that require a user choice |
+| Deep link | URL that opens a platform app or web page |
+
+---
 
 # 2. Overall Description
 
 ## 2.1 Product Perspective
 
-CineTrack is a standalone Android mobile application.
+CineTrack is a standalone Android-first mobile app built with React Native/Expo. It uses local SQLite as the source of truth and TMDB as an optional external system.
 
-The application operates independently without requiring an external backend, authentication service, or third-party movie database.
+Layers:
 
-The application consists of three primary layers:
-
-1. Presentation Layer — displays the user interface and handles user interactions.
-2. Application Logic Layer — processes user actions and application rules.
-3. Data Layer — manages local data persistence through SQLite.
+1. **Presentation** — screens, cards, sheets, navigation.
+2. **Application logic** — media rules, validation, mapping, filtering, backup, TMDB orchestration.
+3. **Data access** — repositories for `media` and `app_settings`.
+4. **External** — TMDB API v3 and image CDN; provider data originates from JustWatch.
+5. **Local cache** — SQLite rows and `expo-image` disk cache.
 
 ## 2.2 Product Functions
 
-The main functions of CineTrack include:
-
-- Displaying a personal movie and series collection.
-- Adding new movies and series.
-- Viewing detailed information.
-- Editing existing entries.
-- Deleting entries.
-- Managing viewing statuses.
-- Searching titles.
-- Filtering by content type and viewing status.
-- Assigning personal ratings.
-- Displaying collection statistics (optional enhancement).
+- Display and manage a personal collection.
+- Add online (TMDB) or manually.
+- View details with hero, synopsis, and where-to-watch.
+- Edit/delete with confirmation; delete supports Undo.
+- Manage status; prompt for rating when Completed.
+- Search/filter/sort, including genre.
+- Display statistics.
+- Display genre-themed cards with posters/providers.
+- Settings: region, subscriptions, enrichment, cache, backup, credits.
+- Export/import backup v2; import backup v1.
+- Refresh provider cache on demand and in the background.
 
 ## 2.3 User Characteristics
 
-CineTrack is designed for general smartphone users who have basic familiarity with mobile applications.
-
-No technical knowledge or account registration is required.
+General smartphone users with basic familiarity with mobile apps. No account, technical knowledge, or registration is required.
 
 ## 2.4 Operating Environment
 
-| Component               | Requirement             |
-| ----------------------- | ----------------------- |
-| Operating System        | Android                 |
-| Development Environment | Expo                    |
-| Runtime                 | Expo Go                 |
-| Programming Language    | JavaScript              |
-| Framework               | React Native            |
-| Database                | SQLite                  |
-| Database Integration    | expo-sqlite             |
-| Navigation              | React Navigation        |
-| UI Styling              | React Native StyleSheet |
+| Component | Requirement |
+| --- | --- |
+| Operating System | Android (primary), iOS compatible |
+| Development Environment | Expo SDK 58 |
+| Runtime | Expo Go during development |
+| Programming Language | JavaScript |
+| Framework | React Native 0.88 |
+| Navigation | React Navigation 7 |
+| Database | SQLite via expo-sqlite |
+| UI Styling | React Native StyleSheet |
+| Online API | TMDB API v3 (optional) |
+| Tests | jest-expo + jest |
 
 ## 2.5 Design Constraints
 
-- The application must use React Native and Expo.
-- The application must be compatible with Expo Go during development.
-- All primary application data must be stored locally.
-- The application must not require an internet connection for its primary functionality.
-- The application must use a consistent dark interface.
-- The application must not require authentication.
-- External movie information APIs are outside the project scope.
+- Must use React Native and Expo SDK 58.
+- Must run in Expo Go for bundled modules.
+- Core data must be stored locally.
+- Core features must work without internet.
+- Must use a consistent dark interface.
+- Must not require authentication.
+- Must not play or distribute content; only open legal platform pages.
+- Online enrichment must be optional and degrade gracefully.
+- No NetInfo dependency; offline is inferred from request failures.
+- Bottom sheets must use React Native `Modal` (no reanimated/bottom-sheet library).
+- UI copy is English.
 
 ## 2.6 Assumptions and Dependencies
 
-- The user has an Android device compatible with Expo Go.
-- The application has access to its local application storage.
-- SQLite is available through the selected Expo SDK and compatible `expo-sqlite` version.
-- The application is intended for one local user per installation.
-- Application data is not automatically synchronized or backed up to a cloud service.
+- User has an Android device compatible with Expo Go.
+- Local app storage is available.
+- SQLite is available through expo-sqlite.
+- One local user per installation.
+- Internet is optional; when available, TMDB is reachable.
+- A valid `EXPO_PUBLIC_TMDB_TOKEN` may be provided; without it, online features are off.
+- TMDB/JustWatch provider data and deep-link URLs can change.
+- The client token is an accepted academic risk.
+- Application data is not automatically synchronized to a cloud.
+
+---
 
 # 3. Functional Requirements
 
-Functional requirements describe the actions and services that the application must provide.
-
-## 3.1 Movie and Series Collection
+## 3.1 Collection
 
 **FR-01 — View Collection**
 
-The system shall display all saved movies and series in the user's collection.
+The system shall display all saved movies and series.
 
 Acceptance Criteria:
 
-- The application displays saved entries.
-- Each entry displays its title, content type, and viewing status.
-- The collection updates after successful data modifications.
-- An empty-state message appears when no entries exist.
+- Entries are loaded from SQLite and displayed in a list/carousel.
+- Each card shows title, type · year, rating (if any), status, genre chips, and a streaming action when cached providers exist.
+- The collection refreshes after successful create/update/delete/restore/import.
+- Empty, loading, and error states are explicit.
+- Home shows status summary and Continue Watching / Up Next / Recently Completed sections.
 
-## 3.2 Add Movie or Series
+## 3.2 Add
 
 **FR-02 — Add Entry**
 
-The system shall allow users to add a new movie or series.
-
-Required information:
-
-- Title
-- Content type
-- Viewing status
-
-Optional information:
-
-- Genre
-- Release year
-- Description
-- Personal rating
+The system shall allow adding a title online or manually.
 
 Acceptance Criteria:
 
-- The title cannot be empty.
-- The user must select a valid content type.
-- The user must select a valid viewing status.
-- The application saves valid entries into SQLite.
-- Newly created entries appear in the collection.
+- Online main flow: tap + → type title (min 2 chars) → tap a TMDB result → choose status (default To Watch) and optional rating → Add to Collection.
+- Search is debounced by 400 ms and filtered to movie/TV (people excluded).
+- Results show a mini poster, title, year, Movie/Series badge, and an “In collection” badge when `(tmdb_id,type)` already exists.
+- Manual flow requires only a title; type defaults Movie and status defaults To Watch.
+- The saved item appears in the collection without a full-page reload.
 
-## 3.3 Edit Entry
+**FR-14 — Search Title Online**
+
+- Queries `GET /search/multi` with `language=en-US`, `include_adult=false`.
+- Handles idle/loading/success/empty/error/offline states.
+- Cancels stale requests when the query changes.
+- On offline/timeout, shows an informative banner and keeps manual add available.
+
+**FR-15 — Auto-fill Metadata**
+
+- Selecting a result fetches details and maps poster, backdrop, genres, year, synopsis, TMDB id/link, and providers.
+- Fields are saved to SQLite so they remain available offline.
+- If detail fetching fails, the app still allows saving basic search-result metadata.
+
+**FR-16 — Poster/Thumbnail (Automatic + Manual)**
+
+- Automatically use TMDB `poster_path` (and `backdrop_path` for hero/cinematic cards) when available.
+- Allow a user-chosen poster from the gallery, cropped/selected at 2:3, copied into app documents, and stored in `poster_uri`.
+- The UI priority is `poster_uri` → TMDB `poster_path` → genre-themed placeholder.
+- Deleting or replacing a custom poster removes the old local file (replacement immediately; deletion after the Undo window).
+- Placeholder uses the primary genre gradient, genre icon, and title initials; it must not be a gray box.
+- Image loads are cached on disk by `expo-image` and continue to display offline.
+
+## 3.3 Edit / Delete
 
 **FR-03 — Edit Entry**
 
-The system shall allow users to modify information associated with an existing entry.
-
-Acceptance Criteria:
-
-- Existing information is displayed in the editing form.
-- Users can modify supported fields.
-- Required field validation is applied.
-- Changes are saved to SQLite.
-- The updated information appears in the collection.
-
-## 3.4 Delete Entry
+- Existing values populate the form.
+- “Find poster & info automatically” opens TMDB search and can fill missing metadata/poster.
+- If genre/year/description already exist, the user is asked whether to keep or replace them.
+- Only title is required; optional fields live under “More details (optional)”.
+- Changes are persisted and visible immediately.
 
 **FR-04 — Delete Entry**
 
-The system shall allow users to delete an existing movie or series.
+- Confirmation is required.
+- Deletion is permanent after confirmation.
+- A snackbar “Deleted … — Undo” appears for 5 seconds; Undo re-inserts the previous row.
+- Local poster files are deleted after the Undo windowunless restored.
+- Canceling the confirmation keeps the entry.
 
-Acceptance Criteria:
+**FR-24 — Backup v2**
 
-- The application requests confirmation before deletion.
-- The entry is permanently removed from the local database after confirmation.
-- Canceling the confirmation must preserve the entry.
-- The collection refreshes after successful deletion.
+- Export writes a JSON file with `version: 2`.
+- Export includes `tmdb_id`, `poster_path`, `backdrop_path`, `tmdb_link`.
+- Export excludes `poster_uri` (device-local) and `providers_*` (cache).
+- Import accepts v2 and v1 backups.
+- Duplicate key: `tmdb_id|type` when `tmdb_id` exists; otherwise `title|type|year`.
+- Existing data is preserved; duplicates are skipped and counted.
 
-## 3.5 Viewing Status Management
+## 3.4 Status & Rating
 
 **FR-05 — Manage Viewing Status**
 
-The system shall allow users to assign one of the following statuses:
-
-| Status    | Description                           |
-| --------- | ------------------------------------- |
-| To Watch  | Titles the user plans to watch        |
-| Watching  | Titles currently being watched        |
-| Completed | Titles the user has finished watching |
-
-Acceptance Criteria:
-
-- Each entry has exactly one valid viewing status.
-- Users can change the status of an existing entry.
-- Status changes are persisted in SQLite.
-
-## 3.6 View Entry Details
-
-**FR-06 — View Details**
-
-The system shall allow users to view the complete information of a selected entry.
-
-Acceptance Criteria:
-
-- The application displays the title, type, genre, release year, status, rating, and description when available.
-- Missing optional information is handled appropriately.
-- Users can navigate back to the collection.
-
-## 3.7 Search
-
-**FR-07 — Search Entries**
-
-The system shall allow users to search their collection using a title.
-
-Acceptance Criteria:
-
-- Search results match the entered title.
-- Search is case-insensitive.
-- Partial title matches are supported.
-- An appropriate message appears when no results are found.
-
-## 3.8 Content Type Filter
-
-**FR-08 — Filter by Content Type**
-
-The system shall allow users to filter their collection by:
-
-- All
-- Movie
-- Series
-
-Acceptance Criteria:
-
-- Selecting a filter displays only matching entries.
-- Selecting All displays the complete collection.
-- Filtering does not modify stored data.
-
-## 3.9 Viewing Status Filter
-
-**FR-09 — Filter by Viewing Status**
-
-The system shall allow users to filter their collection by:
-
-- All
-- To Watch
-- Watching
-- Completed
-
-Acceptance Criteria:
-
-- Only entries matching the selected status are displayed.
-- Selecting All restores the complete status collection.
-- Filtering does not modify stored data.
-
-## 3.10 Personal Rating
+- Exactly one of `TO_WATCH`, `WATCHING`, `COMPLETED`.
+- Status can be changed from Details, the card overflow menu, or the item form.
+- Changes persist in SQLite.
+- Changing to Completed offers the quick rating sheet (FR-20).
 
 **FR-10 — Assign Personal Rating**
 
-The system shall allow users to assign a personal rating to a movie or series.
+- Scale 1.0–5.0, step 0.5.
+- Optional; can be cleared or changed.
+- Rating is persisted and reflected in cards/statistics.
+- Details allows tapping the rating to change it without entering Edit.
 
-Rating scale: 1.0–5.0.
+**FR-20 — Quick Status & Rating Prompt**
 
-Acceptance Criteria:
+- When a status change results in Completed, a rating sheet appears.
+- The sheet is skippable.
+- Saving the rating updates the same record.
+- Canceling/skipping leaves the status change intact.
 
-- Ratings must be within the supported range.
-- Ratings can be updated.
-- Users may leave the rating empty.
-- Rating changes are persisted in SQLite.
+## 3.5 Details
 
-## 3.11 Collection Statistics
+**FR-06 — View Details**
 
-**FR-11 — Display Collection Statistics (Could Have)**
+- Hero: backdrop (fallback poster/gradient theme), overlapping poster, title, type · year, genre chips.
+- Tappable rating and status segmented control.
+- Where to watch groups: Stream / Free & Ads / Rent / Buy.
+- “Updated … ago” and a refresh button.
+- Synopsis is expandable/collapsible above 4 lines.
+- Additional info and Edit/Delete actions.
+- Missing optional information is handled gracefully.
 
-The system may display a summary of the user's collection.
+**FR-17 — Streaming Availability**
 
-Possible information:
+- Providers are normalized from `watch/providers.results[region]`.
+- Categories: `flatrate` → stream, `free` + `ads` → free, `rent`, `buy`.
+- Sorted by `display_priority`.
+- Region comes from Settings (default device region or `ID`).
+- Cache TTL is 7 days; stale/absent cache refreshes in the background when online.
+- If offline with cache, cached data is shown. If there is no cache, a neutral message is shown (no red error).
+- If no provider data exists, no dead streaming button is rendered.
 
-- Total entries.
-- Total movies.
-- Total series.
-- Total completed entries.
-- Total entries currently being watched.
+**FR-18 — Open on Platform**
 
-## 3.12 Sorting
+- Primary button label is “Open on {Provider}” for stream/free or “Rent/Buy on {Provider}” for rent/buy.
+- Link strategy:
+  1. Verified provider search template (Netflix, Prime Video, Apple TV/Apple TV+, YouTube, Google Play Movies, Vidio, Viu).
+  2. Otherwise the TMDB/JustWatch `link` for that title.
+  3. Otherwise an alert “Cannot open the link”; no crash.
+- `{title}` is `encodeURIComponent`-encoded.
+- Up to three secondary provider logos are tappable.
 
-**FR-12 — Sort Collection (Could Have)**
+## 3.6 Cards & Genre
 
-The system may allow users to sort entries by:
+**FR-19 — Genre-themed Card**
 
-- Title (A–Z).
-- Title (Z–A).
-- Recently added.
+- Primary genre is deterministic using: Horror > Sci-Fi > Fantasy > Animation > Romance > Comedy > Thriller > Crime > War > Western > Action > Adventure > Music > Documentary > History > Mystery > Family > Drama.
+- Four layout variants: cinematic, poster, vibrant, atmospheric.
+- Each genre has an accent, gradient, icon, and radius.
+- All variants show the same content: title, type · year, rating, status badge, max 2 genre chips, streaming action.
+- Without a genre, the poster variant uses a neutral theme.
+- Without a poster, a genre-themed gradient + icon + initials placeholder is shown.
+- Cards are memoized; no heavy shadows; `expo-image` uses caching/recycling.
+
+## 3.7 Search / Filter / Sort
+
+**FR-07 — Search Collection**
+
+- Case-insensitive partial match on title or genre.
+- No results message.
+
+**FR-08 / FR-09 — Type and Status Filters**
+
+- Type: All/Movie/Series.
+- Status: All/To Watch/Watching/Completed.
+- Filtering never modifies stored data.
+
+**FR-21 — Genre Filter**
+
+- Genre filter is available in the Filter & Sort sheet.
+- Matches any genre token in the stored comma-separated string.
+- Can be combined with query, type, status, and sort.
+
+**FR-13 — Sort Collection**
+
+- Options: Recent (default), Title A–Z, Rating (descending, nulls last), Year (descending, nulls last).
+
+**FR-12 — Empty States & Feedback**
+
+- Loading, empty, no-results, offline, and error states are distinct.
+- Destructive actions use confirmation and snackbar feedback.
+- No stack traces or blank screens.
+
+## 3.8 Statistics
+
+**FR-11 — Display Collection Statistics**
+
+- Total titles and average rating (rated count).
+- Breakdown by status and type.
+- Updates from the same collection data used by Home/Watchlist.
+
+## 3.9 Settings & Data Enrichment
+
+**FR-22 — Settings (Region & Subscriptions)**
+
+- Region is initialized from `expo-localization` (`regionCode`, fallback `ID`) and stored in `app_settings.region`.
+- Region can be changed via a country list or an ISO two-letter input.
+- Changing region refreshes up to 20 provider caches and updates cards.
+- My streaming subscriptions is a multi-select from the provider catalog for the region (fallback to a known list when offline).
+- Selected subscriptions are stored as a JSON array in `app_settings.subscriptions` and prioritize the card’s primary button.
+- Settings also exposes Backup, Clear image cache, and About/Credits.
+- TMDB/JustWatch attribution is displayed.
+
+**FR-23 — Enrich Existing Data**
+
+- Applies to items without `tmdb_id`.
+- Processes sequentially with ~250 ms delay; shows progress `current/total`; can be cancelled.
+- Auto-applies only when title matches exactly (case-insensitive), type matches, and year is empty or equal.
+- Auto-apply never overwrites title, type, status, rating, or existing genre/year/description.
+- Non-exact items go to “Needs review” with up to three candidates; user selects one.
+- Selecting a candidate can keep or replace existing genre/year/description.
+
+---
 
 # 4. Non-Functional Requirements
 
-## 4.1 Performance
+## 4.1 Offline Degradation
 
-**NFR-01**
+**NFR-01 (revised)**
 
-The application should display normal collection data without noticeable delays under ordinary device conditions.
+Core features must function without internet: viewing the collection, manual add, edit, delete, status, rating, search/filter/sort, statistics, and backup. Enrichment features require internet and must fail safely with friendly feedback. Cached metadata, posters (disk), and providers must remain usable offline.
 
 ## 4.2 Data Persistence
 
 **NFR-02**
 
-All saved entries must remain available after the application is closed and reopened, provided the application data has not been cleared or the application uninstalled.
+Saved entries remain after the app closes/reopens unless app data is cleared or the app is uninstalled. Migrations preserve existing rows.
 
 ## 4.3 Offline Availability
 
 **NFR-03**
 
-All primary features must function without an active internet connection.
+All primary features work without an active internet connection.
 
 ## 4.4 Usability
 
 **NFR-04**
 
-The application must provide understandable navigation, readable text, and clear feedback for user actions.
+Navigation is understandable; text is readable; feedback is explicit. Touch targets are at least 44×44 dp. Icon-only buttons have accessibility labels. Keyboard avoidance is used on form/search screens.
 
-## 4.5 User Interface Consistency
+## 4.5 UI Consistency
 
 **NFR-05**
 
-The application must use a consistent dark theme, including colors, typography, spacing, and interactive elements.
+Consistent dark theme, colors, typography, spacing, and interactive elements. UI copy is English.
 
 ## 4.6 Data Integrity
 
 **NFR-06**
 
-The application must validate user input before saving or updating records.
-
-Invalid or incomplete required data must not be stored.
+Input is validated before saving. Required title must be non-blank. Type/status are constrained. Rating is 1–5. `tmdb_id` + `type` is unique. Imported invalid rows are counted and skipped.
 
 ## 4.7 Compatibility
 
 **NFR-07**
 
-The application must run on supported Android devices using a compatible Expo Go environment during development.
+Runs on supported Android devices with Expo Go SDK 58. Native packages are installed with `npx expo install`.
 
 ## 4.8 Maintainability
 
 **NFR-08**
 
-The application code should be organized into reusable components and separated logical modules to support future maintenance.
+Code is separated into screens, components, hooks, context, services, repositories, constants, and utils. Screens do not run SQL or `fetch`.
+
+## 4.9 Timeout & Error Handling
+
+**NFR-09**
+
+TMDB requests use an 8-second `AbortController` timeout, one retry for network/timeout errors, clear handling for 401 (token) and 429 (rate limit), and friendly messages. No stack traces are shown.
+
+## 4.10 Attribution Compliance
+
+**NFR-10**
+
+Settings/About and README display: “This product uses the TMDB API but is not endorsed or certified by TMDB.” and “Streaming availability data provided by JustWatch.” TMDB logo is not bundled; text attribution is used.
+
+## 4.11 Performance with Images
+
+**NFR-11**
+
+Cards are memoized. FlatList uses `initialNumToRender`, `windowSize`, `maxToRenderPerBatch`, and Android `removeClippedSubviews`. Images use `expo-image` disk caching and `recyclingKey`. Scrolling 100+ items should remain smooth on a mid-range Android device.
+
+## 4.12 Client Token Risk
+
+**NFR-12**
+
+The `EXPO_PUBLIC_TMDB_TOKEN` is bundled in the client. This is an accepted academic risk. Documentation must state the risk and the backend-proxy alternative.
+
+---
 
 # 5. Data Requirements
 
-## 5.1 Movie and Series Entity
+## 5.1 `media` Entity (v2)
 
-The application shall maintain a primary entity named `media`.
+| Attribute | Type | Constraint |
+| --- | --- | --- |
+| id | INTEGER | Primary key, auto increment |
+| title | TEXT | NOT NULL, non-blank |
+| type | TEXT | NOT NULL, MOVIE or SERIES |
+| genre | TEXT | Nullable, comma-separated |
+| release_year | INTEGER | Nullable |
+| status | TEXT | NOT NULL, TO_WATCH/WATCHING/COMPLETED |
+| rating | REAL | Nullable, 1.0–5.0 |
+| description | TEXT | Nullable |
+| created_at | TEXT | NOT NULL |
+| updated_at | TEXT | NOT NULL |
+| tmdb_id | INTEGER | Nullable; unique with type |
+| poster_path | TEXT | Nullable |
+| backdrop_path | TEXT | Nullable |
+| poster_uri | TEXT | Nullable; device-local |
+| tmdb_link | TEXT | Nullable |
+| providers_json | TEXT | Nullable; normalized cache |
+| providers_region | TEXT | Nullable |
+| providers_fetched_at | TEXT | Nullable |
 
-| Attribute    | Type    | Constraint                  |
-| ------------ | ------- | --------------------------- |
-| id           | INTEGER | Primary Key, Auto Increment |
-| title        | TEXT    | NOT NULL                    |
-| type         | TEXT    | NOT NULL, MOVIE or SERIES   |
-| genre        | TEXT    | Nullable                    |
-| release_year | INTEGER | Nullable                    |
-| status       | TEXT    | NOT NULL                    |
-| rating       | REAL    | Nullable, 1.0–5.0           |
-| description  | TEXT    | Nullable                    |
-| created_at   | TEXT    | NOT NULL                    |
-| updated_at   | TEXT    | NOT NULL                    |
+Unique partial index: `(tmdb_id, type) WHERE tmdb_id IS NOT NULL`.
 
-## 5.2 Data Validation
+## 5.2 `app_settings` Entity
+
+| Key | Value | Allowed |
+| --- | --- | --- |
+| region | ISO 3166-1 alpha-2 | `^[A-Z]{2}$` |
+| subscriptions | JSON array of provider ids | integers |
+
+## 5.3 Data Validation
 
 - Title must contain at least one non-whitespace character.
-- Content type must be MOVIE or SERIES.
-- Status must be TO_WATCH, WATCHING, or COMPLETED.
-- Rating must be between 1.0 and 5.0 when provided.
-- Release year must be a valid year when provided.
-- Optional fields may remain empty.
+- Type must be MOVIE or SERIES (defaults to MOVIE if omitted).
+- Status must be TO_WATCH, WATCHING, or COMPLETED (defaults to TO_WATCH if omitted).
+- Rating must be 1.0–5.0 when provided.
+- Release year must be a valid integer within a plausible range.
+- `tmdb_id` must be a positive integer when provided.
+- Provider JSON is not user-validated; it is parsed safely and falls back to empty groups.
+
+---
 
 # 6. External Interface Requirements
 
 ## 6.1 User Interface
 
-The application shall provide:
-
-- A collection screen.
-- An add-entry screen or form.
-- An edit-entry screen or form.
-- An entry detail screen.
-- Search and filter controls.
+Screens: Home, Watchlist, Add Media (search-first), Manual Add, Media Details, Edit Media, Statistics, Settings, Backup & Restore. Bottom sheets: confirm add, filter/sort, actions, rating, region, subscriptions, TMDB search.
 
 ## 6.2 Hardware Interface
 
-The application shall operate on a compatible Android smartphone.
+Android smartphone; no specialized hardware. Photo library access only when the user chooses a custom poster.
 
-No specialized hardware is required.
+## 6.3 Software Interface — TMDB
 
-## 6.3 Software Interface
+- Base URL: `https://api.themoviedb.org/3`
+- Auth header: `Authorization: Bearer <EXPO_PUBLIC_TMDB_TOKEN>`
+- Language: `en-US`
+- Endpoints:
+  - `GET /search/multi?query=&include_adult=false&language=en-US&page=1`
+  - `GET /movie/{id}?language=en-US&append_to_response=watch/providers`
+  - `GET /tv/{id}?language=en-US&append_to_response=watch/providers`
+  - `GET /movie/{id}/watch/providers`
+  - `GET /tv/{id}/watch/providers`
+  - `GET /watch/providers/movie?watch_region={region}`
+  - `GET /watch/providers/tv?watch_region={region}`
+  - `GET /genre/movie/list`, `GET /genre/tv/list` (verification)
+  - `GET /configuration` (image sizes)
+- Image base: `https://image.tmdb.org/t/p/{size}{path}` with `w185`, `w342`, `w780`, `w92` (logos).
+- Error handling: timeout 8 s, one retry, 401/429 mapping, abort support.
+- If the token is absent/invalid, online features are off and manual features remain.
 
-The application shall interact with:
+## 6.4 Software Interface — Local
 
-- Android operating system.
-- Expo runtime.
-- React Native framework.
-- Local SQLite database through expo-sqlite.
+- Android OS, Expo runtime, React Native, expo-sqlite, expo-image, expo-file-system.
+- No backend server.
 
-No external API integration is required.
+---
 
 # 7. Business Rules
 
-| ID    | Rule                                                   |
-| ----- | ------------------------------------------------------ |
-| BR-01 | Every entry must have a title.                         |
-| BR-02 | Every entry must have a content type.                  |
-| BR-03 | Every entry must have exactly one viewing status.      |
-| BR-04 | Personal ratings are optional.                         |
-| BR-05 | Personal ratings must be between 1.0 and 5.0.          |
-| BR-06 | Each entry must have a unique database ID.             |
-| BR-07 | Deletion requires user confirmation.                   |
-| BR-08 | Search and filtering must not modify database records. |
+| ID | Rule |
+| --- | --- |
+| BR-01 | Every entry must have a title. |
+| BR-02 | Every entry must have a content type. |
+| BR-03 | Every entry must have exactly one viewing status. |
+| BR-04 | Personal ratings are optional. |
+| BR-05 | Ratings must be between 1.0 and 5.0. |
+| BR-06 | Each entry must have a unique database ID. |
+| BR-07 | Deletion requires user confirmation. |
+| BR-08 | Search and filtering must not modify records. |
+| BR-09 | Only `title` is user-required; type/status have defaults. |
+| BR-10 | `(tmdb_id, type)` must be unique when `tmdb_id` exists. |
+| BR-11 | Provider cache is valid for 7 days and is region-specific. |
+| BR-12 | Online enrichment must never overwrite user fields without consent. |
+| BR-13 | Auto-enrichment requires exact title + same type + compatible year. |
+| BR-14 | Streaming playback is out of scope; only legal platform pages are opened. |
+| BR-15 | TMDB/JustWatch attribution must remain visible in Settings/About and README. |
+| BR-16 | Backup v2 excludes device-local poster URIs and provider caches. |
+| BR-17 | Region must be a two-letter ISO code. |
+| BR-18 | A failed online request must not block manual add/edit. |
+
+---
 
 # 8. Acceptance Criteria
 
-The application is considered to satisfy its core requirements when:
+The application satisfies v2 when:
 
-1. Users can create movie and series entries.
-2. Users can view their saved collection.
-3. Users can access entry details.
-4. Users can edit existing entries.
-5. Users can delete entries after confirmation.
-6. Users can update viewing statuses.
-7. Users can search by title.
-8. Users can filter by content type and status.
-9. Users can assign personal ratings.
-10. Saved data persists after application restart.
-11. Primary features remain usable without internet access.
-12. Required input validation works correctly.
+1. From Home, a user can add a movie with: tap + → type title → tap result → tap Add to Collection (≤ 4 taps + typing).
+2. The saved item has poster, genre, year, synopsis, and providers filled automatically (when online).
+3. Adding an existing `(tmdb_id,type)` is rejected with “Already in your collection.”
+4. Airplane mode shows an offline banner; manual form can save with only a title.
+5. Empty/invalid token does not crash; a clear message appears and manual add works.
+6. At least four visibly different card layouts appear for Horror, Comedy, Action, and Drama.
+7. Without a poster, a genre-themed placeholder is shown.
+8. Cards show “Open on {Provider}” when data exists; tapping opens a platform/fallback; tapping the card body opens details.
+9. Watchlist header is compact (search + Filter), filters include type/status/genre/sort in a sheet, and active chips can be removed.
+10. The `⋯` menu opens; changing status to Completed shows a skippable rating sheet.
+11. Details shows hero, where-to-watch with “Updated … ago” + refresh, and expandable synopsis.
+12. Settings changes region and refreshes providers; subscriptions affect the primary card button; attribution is visible.
+13. DB v1 with data upgrades to v2 without loss; old items show genre-themed placeholders.
+14. Backup v2 exports/imports; v1 backups still import.
+15. “Complete my existing titles automatically” follows the exact-match rule and never overwrites without consent.
+16. Lint, tests, doctor, and Android export pass; no SQL/fetch in screens/components.
+17. All v2.0 documents are consistent with the code and describe the optional online enrichment accurately.
+18. README roadmap reflects the real status; AGENTS describes React Navigation and the actual layered structure.
+
+---
 
 # 9. Out of Scope
 
-The following features are explicitly excluded from this project:
-
-- User registration and authentication.
-- Cloud database and synchronization.
-- Online movie streaming.
-- External movie database integration.
-- Automatic poster retrieval.
+- User registration/authentication.
+- Cloud database/synchronization.
+- Streaming or content distribution.
 - Social features and sharing.
 - Multiple user profiles.
 - Online recommendations.
-- Payment and subscription features.
+- Payment/subscription management inside the app.
+- Guaranteed per-title deep links for every provider.
+- Backend proxy for the TMDB token (future work).
 
 ---
 
 **End of Document**
 
 Document ID: CT-SRS-001\
-Version: 1.0\
+Version: 2.0\
 Project: CineTrack

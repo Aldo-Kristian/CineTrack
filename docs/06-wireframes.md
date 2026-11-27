@@ -1,188 +1,347 @@
 # CineTrack — Wireframe Design
 
+**Document ID:** CT-WF-001\
+**Version:** 2.0\
+**Status:** Final\
 **Phase:** 3 — System Design\
-**Document:** 06-wireframes\
 **Project:** CineTrack\
-**Status:** Draft
+**Last updated:** 2026-11-28
 
-Wireframes digunakan untuk menentukan posisi elemen UI sebelum masuk ke tahap visual styling.
+## Revision History
 
-Pendekatan yang digunakan adalah *low-fidelity wireframe*: fokus pada layout, navigasi, dan fungsi, bukan warna atau dekorasi. Seluruh wireframe merepresentasikan **dark theme** dengan aksen ungu.
+| Version | Date | Summary | Reason |
+| --- | --- | --- | --- |
+| 2.0 | 2026-11-28 | Search-first add, confirm sheet, Home carousels, Watchlist filter sheet/chips, Detail hero/where-to-watch, Settings, four genre card variants, themed placeholder | Lecturer consultation + UX fixes |
+| 1.0 | 2026-11-25 | Initial low-fidelity wireframes | Project setup |
 
-**Legenda:** `[ ... ]` = input atau tombol, `( ... )` = badge atau pilihan, `( + )` = tombol tambah, `<` = tombol kembali.
+---
 
-## 1. Home Screen
+Low-fidelity wireframes focus on layout, hierarchy, and function. The real app uses the Netflix-style dark theme (`#141414` background, `#E50914` primary). Accent colors vary by genre.
 
-**Tujuan:** memberikan ringkasan koleksi dan akses cepat ke fitur utama.\
-**Related:** FR-01, FR-11, UC-01, UC-03
+**Legend:** `[ ... ]` = input/button, `( ... )` = badge/choice, `( + )` = add button, `<` = back, `⋯` = overflow.
+
+## 1. Home
+
+**Purpose:** status overview and fast access to active/recent titles.\
+**Related:** FR-01, FR-11, FR-19, UC-01.
 
 ```
 ┌─────────────────────────────────────┐
-│ GOOD AFTERNOON                      │
-│ My Collection                       │
+│ CINETRACK                       [⚙] │
+│ Your personal film & series tracker │
 │                                     │
-│ YOUR WATCHLIST                      │
-│ 24 Titles                           │
+│ [  12  ]   [  5  ]   [  7  ]        │
+│ To Watch   Watching  Completed      │
+│  (tap → Watchlist with filter)      │
 │                                     │
-│   12          5           7         │
-│   To Watch    Watching    Completed │
+│ Continue Watching          5         │
+│ ┌────┐ ┌────┐ ┌────┐ ┌────┐        │
+│ │pst │ │pst │ │pst │ │pst │  →     │
+│ └────┘ └────┘ └────┘ └────┘        │
 │                                     │
-│ Recently Added              See All │
-│ ─────────────────────────────────── │
-│ [Poster]  Interstellar              │
-│           Movie · 2014              │
-│ ─────────────────────────────────── │
-│ [Poster]  Breaking Bad              │
-│           Series · 2008             │
-│ ─────────────────────────────────── │
+│ Up Next                    8         │
+│ ┌────┐ ┌────┐ ┌────┐ ┌────┐        │
+│ │pst │ │pst │ │pst │ │pst │  →     │
+│ └────┘ └────┘ └────┘ └────┘        │
 │                                     │
+│ Recently Completed                   │
+│ ┌─────────────────────────────────┐ │
+│ │ [poster] Title · 2021    ★ 4.5  │ │
+│ │          (Completed) (Genre)     │ │
+│ │          [▶ Open on Netflix]     │ │
+│ └─────────────────────────────────┘ │
 │                             ( + )   │
 │ ─────────────────────────────────── │
 │   Home      Watchlist     Statistics│
 └─────────────────────────────────────┘
 ```
 
-## 2. Watchlist Screen
+Empty state: icon + “Your collection is empty” + large CTA **Find your first movie**.
 
-**Tujuan:** menampilkan seluruh koleksi dan menyediakan search, filter, serta sorting.\
-**Related:** FR-01, FR-07, FR-08, FR-09, FR-12, UC-07, UC-08, UC-09, UC-12
+## 2. Watchlist
+
+**Purpose:** full collection with compact search + filter access.\
+**Related:** FR-01, FR-07…FR-09, FR-13, FR-20, FR-21.
 
 ```
 ┌─────────────────────────────────────┐
-│ My Watchlist                        │
-│                                     │
+│ Watchlist                24 titles  │
 │ [ Search movies or series...      ] │
-│                                     │
-│ Type:   [All] [Movie] [Series]      │
-│ Status: [All Status] [To Watch]     │
-│         [Watching] [Completed]      │
-│                                     │
-│ 24 results      Sort: Recently Added│
+│                              [☰ 2]  │
+│ (Movie ×) (Sci-Fi ×) (Sort: Rating ×)│
 │ ─────────────────────────────────── │
-│ [Poster]  Interstellar              │
-│           Movie · 2014              │
-│           (To Watch)                │
-│ ─────────────────────────────────── │
-│ [Poster]  Breaking Bad              │
-│           Series · 2008             │
-│           (Watching)                │
-│ ─────────────────────────────────── │
-│ [Poster]  Inception                 │
-│           Movie · 2010              │
-│           (Completed)               │
-│ ─────────────────────────────────── │
+│ ┌─────────────────────────────────┐ │
+│ │ [poster] Title          ★ 4.5 ⋯│ │
+│ │          Movie · 2021           │ │
+│ │          (Action) (Sci-Fi)      │ │
+│ │          (Completed)            │ │
+│ │          [▶ Open on Netflix]    │ │
+│ │          Also on (◦)(◦)(◦)      │ │
+│ └─────────────────────────────────┘ │
+│ ┌─────────────────────────────────┐ │
+│ │ [poster] Comedy · 2023      ⋯  │ │
+│ │          (Comedy) (Family)      │ │
+│ └─────────────────────────────────┘ │
 │                             ( + )   │
 │ ─────────────────────────────────── │
 │   Home      Watchlist     Statistics│
 └─────────────────────────────────────┘
 ```
 
-Chip filter dapat di-scroll secara horizontal pada layar kecil. Saat tidak ada hasil, tampilkan Empty State.
+- `[☰ 2]` is the Filter button with active-filter count.
+- Long-press and `⋯` open the same action sheet.
 
-## 3. Add / Edit Media Screen
-
-**Tujuan:** menyediakan form untuk memasukkan atau memperbarui informasi tontonan.\
-**Related:** FR-02, FR-03, FR-05, FR-10, UC-02, UC-04, UC-10
+## 3. Filter & Sort Sheet
 
 ```
 ┌─────────────────────────────────────┐
-│ <  Add New Title                    │
+│              ────                   │
+│ Filter & Sort                   [×] │
+│                                     │
+│ Type                                │
+│ (All) (Movie) (Series)              │
+│ Status                              │
+│ (All) (To Watch) (Watching)         │
+│ (Completed)                         │
+│ Genre                               │
+│ (All) (Action) (Adventure) (… )     │
+│ Sort by                             │
+│ (Recent) (Title A-Z) (Rating) (Year)│
+│                                     │
+│ [        Reset      ] [  Apply  ]   │
+└─────────────────────────────────────┘
+```
+
+## 4. Add Media — Search First
+
+```
+┌─────────────────────────────────────┐
+│ <  Add to Collection                │
+│                                     │
+│ Find a movie or series              │
+│ Search once — poster, year, genres, │
+│ synopsis, providers fill in.        │
+│ [ Search movie or series...       ] │
+│                                     │
+│ + Can't find it? Add manually       │
+│ ─────────────────────────────────── │
+│ [pst] Inception                     │
+│       (Movie) 2010                  │
+│ ─────────────────────────────────── │
+│ [pst] Breaking Bad     (In collection)│
+│       (Series) 2008                 │
+│ ─────────────────────────────────── │
+│ [pst] Dune                          │
+│       (Movie) 2021                  │
+└─────────────────────────────────────┘
+```
+
+States: idle hint, loading spinner, empty, offline banner, token/API error banner.
+
+## 5. Confirm Add Sheet
+
+```
+┌─────────────────────────────────────┐
+│              ────                   │
+│ Add to collection               [×] │
+│                                     │
+│ ┌──────┐  Dune                       │
+│ │poster│  Movie · 2021               │
+│ │      │  (Sci-Fi) (Adventure)       │
+│ └──────┘  Loading details...         │
+│                                     │
+│ Paul Atreides travels to Arrakis…   │
+│                                     │
+│ Status                              │
+│ (To Watch) (Watching) (Completed)   │
+│                                     │
+│ (jika Completed) Your rating        │
+│  ✕  −  ★ 4.5 / 5  +                 │
+│                                     │
+│ [        Add to Collection       ]  │
+└─────────────────────────────────────┘
+```
+
+## 6. Manual Add / Edit
+
+```
+┌─────────────────────────────────────┐
+│ <  Add Manually / Edit Title        │
+│ [ ✦ Find poster & info automatically]│
 │                                     │
 │ Title *                             │
 │ [ Enter movie or series title     ] │
 │                                     │
-│ Content Type *                      │
-│ ( Movie )  ( Series )               │
+│ Type                                │
+│ (Movie) (Series)                    │
+│ Viewing Status                      │
+│ (To Watch) (Watching) (Completed)   │
 │                                     │
-│ Genre                               │
-│ [ e.g. Sci-Fi, Action, Drama       ]│
+│ ▾ More details (optional)           │
+│   Genre                             │
+│   [ Choose genres               ▾ ] │
+│   Release Year                      │
+│   [ Select release year         ▾ ] │
+│   Personal Rating                   │
+│   [ Your rating  − + ]              │
+│   Description                       │
+│   [ Write a short description...  ] │
+│   Poster                            │
+│   [No custom poster]                │
+│   [ Choose poster from gallery    ] │
 │                                     │
-│ Release Year                        │
-│ [ e.g. 2025                        ]│
-│                                     │
-│ Viewing Status *                    │
-│ ( To Watch ) ( Watching )           │
-│ ( Completed )                       │
-│                                     │
-│ Personal Rating (optional)          │
-│   *  *  *  *  *      - / 5.0        │
-│                                     │
-│ Description                         │
-│ [ Write a short description...     ]│
-│ [                                  ]│
-│                                     │
-│ [           Save Title             ]│
+│ [           Add to Collection    ]  │
 └─────────────────────────────────────┘
 ```
 
-Tanda `*` menandakan field wajib (title, content type, viewing status). Pada mode Edit, judul halaman menjadi **Edit Title**, seluruh field terisi data yang ada, dan tombol berubah menjadi **Save Changes**.
+Edit mode expands “More details” by default.
 
-## 4. Media Details Screen
-
-**Tujuan:** menampilkan informasi lengkap tontonan serta akses ke Edit, Delete, dan perubahan status.\
-**Related:** FR-03, FR-04, FR-05, FR-06, UC-03, UC-05, UC-06
+## 7. Details
 
 ```
 ┌─────────────────────────────────────┐
-│ <  Details                      Edit│
+│ <  Details                          │
+│ ┌─────────────────────────────────┐ │
+│ │        BACKDROP / gradient      │ │
+│ │                                 │ │
+│ └─────────────────────────────────┘ │
+│ ┌──────┐ Dune                        │
+│ │poster│ Movie · 2021                │
+│ └──────┘ (Sci-Fi) (Adventure)        │
+│          (Completed)                │
 │                                     │
-│ +--------------------------------+  │
-│ |                                |  │
-│ |       Poster Placeholder       |  │
-│ |                                |  │
-│ +--------------------------------+  │
+│ ★ Personal rating 4.5    Tap to rate│
 │                                     │
-│ Interstellar                        │
-│ Movie · 2014 · Sci-Fi               │
-│ (To Watch)                          │
+│ Status                              │
+│ (To Watch) (Watching) (Completed)   │
 │                                     │
-│ Personal Rating                     │
-│ 4.0 / 5.0                           │
+│ Where to watch      Updated today ↻ │
+│ Stream                              │
+│ (logo) Netflix      [▶ Open on …]   │
+│ Free & Ads                          │
+│ (logo) YouTube      [▶ Open on …]   │
+│ Rent                                │
+│ (logo) Apple TV     [Rent/Buy on …] │
+│ [ Open Where to Watch page        ] │
 │                                     │
-│ Description                         │
-│ A science fiction film about a      │
-│ journey through space and time.     │
+│ Synopsis                            │
+│ Paul Atreides travels to Arrakis…   │
+│ Read more                           │
 │                                     │
-│ Change Viewing Status               │
-│ [To Watch] [Watching] [Completed]   │
+│ Details                             │
+│ Type / Year / Added / Updated / TMDB│
 │                                     │
-│ [          Delete Title          ]  │
+│ [ Edit ]              [ Delete ]    │
 └─────────────────────────────────────┘
 ```
 
-Delete selalu menampilkan dialog konfirmasi sebelum data dihapus (BR-07). Field opsional yang kosong ditampilkan sebagai "-".
-
-## 5. Statistics Screen
-
-**Tujuan:** menampilkan ringkasan koleksi pengguna.\
-**Related:** FR-11, UC-11
+## 8. Settings
 
 ```
 ┌─────────────────────────────────────┐
-│ Your Statistics                     │
+│ <  Settings                         │
+│ PREFERENCES                         │
+│ [📍] Region                     ID >│
+│      Streaming availability country │
+│ [📺] My streaming subscriptions     │
+│      2 selected                     │
+│ [ⓘ] Online metadata              On │
 │                                     │
-│ TOTAL COLLECTION                    │
-│ 24 Titles                           │
+│ COLLECTION TOOLS                    │
+│ [✨] Complete my existing titles    │
+│      3 titles without a TMDB match  │
+│      Working 12/40  [Cancel]        │
+│      [████████░░░░░░]               │
+│      Needs review (2)               │
+│      Old Title → (candidate 1) …    │
 │                                     │
-│   14           10                   │
-│   Movies       Series               │
+│ DATA                                │
+│ [🗄] Backup & Restore             > │
+│ [🚫] Clear image cache            > │
 │                                     │
-│   5            7                    │
-│   Watching     Completed            │
-│                                     │
-│ Viewing Progress                    │
-│ Completed                    7 / 24 │
-│ [███████░░░░░░░░░░░░░░░░░░░░░░]     │
-│ ─────────────────────────────────── │
-│   Home      Watchlist     Statistics│
+│ ABOUT & CREDITS                     │
+│ This product uses the TMDB API but  │
+│ is not endorsed or certified by TMDB│
+│ Streaming availability data provided│
+│ by JustWatch.                       │
+│ CineTrack 2.0.0                     │
 └─────────────────────────────────────┘
 ```
 
-## 6. Wireframe Decisions
+## 9. Four Card Variants
 
-- Dark background dengan aksen ungu.
-- Poster menggunakan placeholder lokal, bukan API.
-- Informasi utama ditampilkan dalam card.
-- Bottom navigation digunakan untuk tiga area utama.
-- Add dan Edit menggunakan struktur form yang sama.
-- Detail menyediakan akses ke Edit, Delete, dan perubahan status.
+All variants show title, type · year, rating, status, max 2 genre chips, and a streaming action.
+
+### 9.1 Cinematic — Action, Adventure, Thriller, Crime, War, Western
+
+```
+┌─────────────────────────────────────┐
+│ ███████ BACKDROP 16:9 ██████████████│
+│ ████████████████████████████████████│
+│ ████████████████████ gradient ██████│
+│ Title                      ★ 4.5  ⋯ │
+│ Movie · 2021                        │
+│ (Action) (Adventure)                │
+│ (Completed)  [▶ Open on Netflix]    │
+│              Also on (◦)(◦)         │
+└─────────────────────────────────────┘
+```
+
+### 9.2 Poster — Drama, Mystery, History, Documentary
+
+```
+┌─────────────────────────────────────┐
+│ ┌──────┐ Title              ★ 4.5 ⋯│
+│ │poster│ Movie · 2021               │
+│ │ 2:3  │ (Drama) (Mystery)           │
+│ └──────┘ (Completed)                 │
+│ [▶ Open on Netflix]  Also on (◦)(◦) │
+└─────────────────────────────────────┘
+```
+
+### 9.3 Vibrant — Comedy, Animation, Family, Music
+
+```
+╭─────────────────────────────────────╮
+│ (✿ sticker)                     ⋯   │
+│ ┌────────┐ Title           ★ 4.5    │
+│ │ poster │ Movie · 2023              │
+│ │ radius │ (Comedy) (Family)         │
+│ └────────┘ (Watching)                │
+│ [▶ Open on Prime Video]             │
+╰─────────────────────────────────────╯
+```
+
+### 9.4 Atmospheric — Horror, Sci-Fi, Fantasy, Romance
+
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ┌──────┐ Title              ★ 4.5  ┃
+┃ ┃poster┃ ◉ Movie · 2024            ┃
+┃ ┃ glow ┃ (Horror) (Thriller)        ┃
+┃ └──────┘ (Completed)          ⋯    ┃
+┃ [▶ Open on Netflix]                ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+```
+
+### 9.5 Poster placeholder (no image)
+
+```
+┌───────────────┐
+│  gradient     │
+│   (genre icon)│
+│      DT       │
+│  (initials)   │
+└───────────────┘
+```
+
+## 10. Wireframe Decisions
+
+- Dark background with genre accents; red remains the global primary action color.
+- Watchlist header is reduced to search + Filter button; type/status/genre/sort move into a sheet.
+- Active filters are visible as removable chips.
+- Add is search-first; manual add is a deliberate fallback, not the default.
+- Cards expose the same information in every variant to keep scanning consistent.
+- Streaming is optional: no provider data = no dead button.
+- Touch targets are at least 44×44 dp; icon buttons have accessibility labels.
+- Bottom sheets use the native `Modal` component; no extra sheet library.

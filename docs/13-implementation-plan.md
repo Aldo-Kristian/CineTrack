@@ -1,438 +1,287 @@
 # CineTrack — Implementation Plan
 
 **Document ID:** CT-IMP-001\
-**Version:** 1.0\
-**Status:** Draft\
+**Version:** 2.0\
+**Status:** Final\
 **Phase:** 4 — Implementation Planning\
-**Baseline:** Phase 3 — System Design
+**Baseline:** Phase 3 — System Design\
+**Last updated:** 2026-11-28
 
-Dokumen ini menerjemahkan desain sistem (Phase 3) menjadi rencana implementasi project React Native yang dapat dijalankan. Hasil akhirnya adalah project structure, daftar dependency, strategi navigasi, strategi state management, rencana inisialisasi database, dan urutan development.
+## Revision History
+
+| Version | Date | Summary | Reason |
+| --- | --- | --- | --- |
+| 2.0 | 2026-11-28 | New dependencies, DB v2, TMDB/provider services, milestones M14–M20, real implementation status, QA results | Lecturer consultation + UX fixes |
+| 1.0 | 2026-11-25 | Initial implementation plan | Project setup |
 
 ---
 
 ## 1. Technology Stack
 
-| Technology         | Package / Tool             | Purpose                  |
-| ------------------ | -------------------------- | ------------------------ |
-| Framework          | React Native               | Mobile application       |
-| Development        | Expo                       | Development environment  |
-| Runtime            | Expo Go                    | Testing di Android       |
-| Language           | JavaScript                 | Application logic        |
-| Navigation         | React Navigation           | Navigasi halaman         |
-| Database           | SQLite                     | Local database           |
-| SQLite Integration | expo-sqlite                | Database operations      |
-| State Management   | React Context + useReducer | Shared application state |
-| Styling            | React Native StyleSheet    | UI styling               |
-| Icons              | Lucide React Native        | Icons                    |
-| Version Control    | Git + GitHub               | Source code management   |
+| Technology | Package / Tool | Purpose |
+| --- | --- | --- |
+| Framework | React Native 0.88.1 | Mobile application |
+| Runtime | Expo SDK 58.1.0 | Development/runtime |
+| Language | JavaScript | Application logic |
+| Navigation | React Navigation 7 | Stack + bottom tabs |
+| Database | SQLite / expo-sqlite | Local persistence (v2) |
+| State | React Context + hooks | Collection, settings, snackbar |
+| Online metadata | TMDB API v3 | Search/details/posters/providers |
+| Images | expo-image | Disk cache + recycling |
+| Gradients | expo-linear-gradient | Genre themes/overlays |
+| Poster picker | expo-image-picker | Custom poster from gallery |
+| Region | expo-localization | Default region |
+| Files | expo-file-system | Copy/delete poster files |
+| Backup I/O | expo-document-picker + expo-sharing | JSON export/import |
+| Icons | lucide-react-native | Icons |
+| Styling | React Native StyleSheet | UI styling |
+| Tests | jest-expo 58 + jest 30 | Pure-function tests |
+| Lint | eslint 9 + eslint-config-expo 58 | Quality |
+| Version control | Git + GitHub | Source management |
 
-### Keputusan Teknis
+## 2. Dependencies
 
-1. **JavaScript, bukan TypeScript.** Fokus pembelajaran tetap pada React Native, component lifecycle, navigation, dan CRUD.
-2. **React Navigation.** Bottom Tab Navigator untuk navigasi utama dan Native Stack Navigator untuk halaman detail serta form.
-3. **SQLite.** `expo-sqlite` digunakan untuk penyimpanan lokal yang persisten.
-4. **React Context + useReducer.** Redux atau Zustand tidak diperlukan untuk aplikasi dengan kompleksitas ini.
-5. **StyleSheet.** Styling bawaan React Native agar tidak menambah dependency styling yang belum diperlukan.
+### 2.1 Runtime
 
----
+| Package | Version (package.json) | Notes |
+| --- | --- | --- |
+| `expo` | `~58.1.0` | SDK |
+| `react` | `19.3.0` | |
+| `react-native` | `0.88.1` | |
+| `@react-navigation/native` | `^7.5.2` | |
+| `@react-navigation/bottom-tabs` | `^7.22.0` | |
+| `@react-navigation/native-stack` | `^7.21.1` | |
+| `react-native-screens` | `~4.30.1` | |
+| `react-native-safe-area-context` | `~5.11.1` | |
+| `expo-sqlite` | `~58.0.18` | DB |
+| `expo-image` | `~58.0.19` | Posters/backdrops/logos |
+| `expo-linear-gradient` | `~58.0.4` | Themes |
+| `expo-image-picker` | `~58.0.10` | Custom poster |
+| `expo-localization` | `~58.0.5` | Region |
+| `expo-file-system` | `~58.0.15` | Poster files |
+| `expo-document-picker` | `~58.0.5` | Backup import |
+| `expo-sharing` | `~58.0.24` | Backup export |
+| `expo-status-bar` | `~58.0.5` | Status bar |
+| `lucide-react-native` | `^1.80.0` | Icons |
+| `react-native-svg` | `15.16.0` | Lucide dependency |
 
-## 2. Dependencies & Package Selection
+### 2.2 Development
 
-| Package                        | Installation | Priority            |
-| ------------------------------ | ------------ | ------------------- |
-| expo-sqlite                    | Expo install | Required            |
-| @react-navigation/native       | npm install  | Required            |
-| @react-navigation/bottom-tabs  | npm install  | Required            |
-| @react-navigation/native-stack | npm install  | Required            |
-| react-native-screens           | Expo install | Required            |
-| react-native-safe-area-context | Expo install | Required            |
-| lucide-react-native            | npm install  | Optional UI         |
-| react-native-svg               | Expo install | Required for Lucide |
+| Package | Version | Purpose |
+| --- | --- | --- |
+| `jest` | `~30.5.2` | Test runner |
+| `jest-expo` | `~58.0.16` | Expo Jest preset |
+| `eslint` | `^9.0.0` | Lint |
+| `eslint-config-expo` | `~58.0.4` | Expo flat config |
 
-### Installation Strategy
-
-Untuk native dependencies, gunakan `npx expo install` supaya versi package disesuaikan dengan Expo SDK proyek.
-
-```bash
-npx expo install expo-sqlite
-npx expo install react-native-screens react-native-safe-area-context
-npx expo install react-native-svg
-```
-
-Untuk React Navigation:
-
-```bash
-npm install @react-navigation/native
-npm install @react-navigation/bottom-tabs
-npm install @react-navigation/native-stack
-```
-
-Untuk Lucide:
-
-```bash
-npm install lucide-react-native
-```
-
-Dependency tidak dipasang sekaligus sebelum project dibuat. Dependency dipasang bertahap dan diperiksa kompatibilitasnya, sesuai risiko "Ketidaksesuaian Expo SDK dan library" di `01-project-planning.md`.
-
----
+**Installation rule:** native packages must use `npx expo install`. Do not use `npm install` for Expo modules.
 
 ## 3. Project Initialization
 
-Project menggunakan **Expo managed workflow** dengan template JavaScript minimal (bukan template yang sudah memiliki banyak fitur tambahan).
+Expo managed workflow, blank JavaScript template.
 
 ```bash
 npx create-expo-app@latest CineTrack --template blank
 cd CineTrack
-npx expo start
+npm install
+npx expo install expo-sqlite react-native-screens react-native-safe-area-context react-native-svg
+npm install @react-navigation/native @react-navigation/bottom-tabs @react-navigation/native-stack lucide-react-native
 ```
 
-Kemudian scan QR code menggunakan Expo Go pada Android.
+v2 additions:
 
-| Tool               | Fungsi                                                        |
-| ------------------ | ------------------------------------------------------------- |
-| Expo Go            | Menjalankan aplikasi React Native langsung di smartphone      |
-| Visual Studio Code | Code editor untuk pengembangan dan pengelolaan project        |
-
-**Catatan:** Expo Go digunakan sebagai development runtime. Tidak dibutuhkan backend atau server tambahan untuk menjalankan aplikasi ini.
-
----
+```bash
+npx expo install expo-image expo-linear-gradient expo-image-picker expo-localization
+npx expo install jest-expo jest --dev
+```
 
 ## 4. Final Project Structure
 
-Berdasarkan arsitektur Phase 3 (`09-system-architecture.md` dan `12-component-design.md`):
+See `docs/12-component-design.md` §6 for the full tree. Main layers:
 
 ```
-CineTrack/
-│
-├── docs/
-│   ├── 01-project-planning.md
-│   ├── 02-srs.md
-│   ├── 03-use-case.md
-│   ├── 04-requirement-traceability.md
-│   ├── 05-user-flow.md
-│   ├── 06-wireframes.md
-│   ├── 07-activity-diagrams.md
-│   ├── 08-sequence-diagrams.md
-│   ├── 09-system-architecture.md
-│   ├── 10-database-design.md
-│   ├── 11-data-dictionary.md
-│   ├── 12-component-design.md
-│   └── 13-implementation-plan.md
-│
-├── assets/
-│   ├── images/
-│   └── icons/
-│
-├── src/
-│   ├── components/
-│   ├── screens/
-│   ├── navigation/
-│   ├── database/
-│   │   ├── database.js
-│   │   └── mediaRepository.js
-│   ├── services/
-│   │   ├── mediaService.js
-│   │   └── validationService.js
-│   ├── context/
-│   │   └── MediaContext.js
-│   ├── hooks/
-│   │   └── useMedia.js
-│   ├── constants/
-│   │   ├── colors.js
-│   │   └── mediaOptions.js
-│   └── utils/
-│       └── formatters.js
-│
-├── App.js
-├── app.json
-├── package.json
-└── README.md
+src/
+├── components/     UI: cards, sheets, posters, providers, forms
+├── config/         env (TMDB token)
+├── constants/      colors, spacing, genres, themes, providers
+├── context/        MediaContext, SnackbarContext
+├── database/       database.js, mediaRepository, settingsRepository
+├── hooks/          useMedia, useCardMedia, useTmdbSearch, …
+├── navigation/     RootNavigator, TabNavigator
+├── screens/        Home, Watchlist, Add, ManualAdd, Details, Edit,
+│                   Statistics, Settings, Backup
+├── services/       mediaService, tmdbClient, tmdbMapper,
+│                   providerService, validationService
+└── utils/          formatters, files, links
 ```
-
-Folder `context/` ditambahkan dibanding Phase 3 karena state management menggunakan React Context + useReducer. Isi `components/` dan `screens/` mengikuti `12-component-design.md`.
-
----
 
 ## 5. Navigation Strategy
 
-Navigasi menggunakan dua navigator.
-
 ```mermaid
 flowchart TB
-    NC[NavigationContainer] --> RS[Root Stack Navigator]
-    RS --> MT[MainTabs - Bottom Tab Navigator]
+    NC[NavigationContainer] --> RS[Root Stack]
+    RS --> MT[MainTabs - Bottom Tabs]
     RS --> AM[AddMedia]
+    RS --> MA[ManualAdd]
     RS --> MD[MediaDetails]
     RS --> EM[EditMedia]
-    MT --> H[Home - Tab 1]
-    MT --> W[Watchlist - Tab 2]
-    MT --> S[Statistics - Tab 3]
+    RS --> BK[Backup]
+    RS --> ST[Settings]
+    MT --> H[Home]
+    MT --> W[Watchlist]
+    MT --> S[Statistics]
 ```
 
-### Navigation Rules
+Rules:
 
-| Screen       | Navigator  | Purpose      |
-| ------------ | ---------- | ------------ |
-| Home         | Bottom Tab | Dashboard    |
-| Watchlist    | Bottom Tab | Collection   |
-| Statistics   | Bottom Tab | Statistics   |
-| AddMedia     | Root Stack | Create entry |
-| MediaDetails | Root Stack | View details |
-| EditMedia    | Root Stack | Update entry |
-
-### Navigation Flow
-
-```
-Home
- ├── Add Media
- ├── Watchlist
- │    └── Media Details
- │         ├── Edit Media
- │         └── Delete
- └── Statistics
-```
-
-Dengan pendekatan ini, halaman Add dan Edit tidak perlu menjadi tab permanen. Alur ini konsisten dengan `05-user-flow.md`.
-
----
+- Add/Manual/Details/Edit/Backup/Settings are stack screens, not tabs.
+- Home status cards navigate to Watchlist with a status param; Watchlist applies it once and clears it.
+- Deep screens return via `goBack`.
 
 ## 6. State Management Strategy
 
-Menggunakan React Context API dan `useReducer`. Data collection diakses oleh beberapa screen sekaligus; jika setiap halaman memiliki state sendiri, data bisa menjadi tidak konsisten.
+| State | Location | Persistence |
+| --- | --- | --- |
+| Collection | `MediaContext` | SQLite |
+| Region | `MediaContext` + `app_settings` | SQLite |
+| Subscriptions | `MediaContext` + `app_settings` | SQLite |
+| Snackbar | `SnackbarContext` | Memory |
+| Search query/results | `useTmdbSearch` | Memory |
+| Filters/sort | `WatchlistScreen` | Memory (not persisted) |
+| Provider cache | `media.providers_*` | SQLite |
+| Images | `expo-image` | Disk/memory cache |
+| Custom posters | documents + `poster_uri` | Device file system |
 
-### State yang Dikelola
+**Flow on mutation:** validate → service → repository → SQLite → context refresh → UI.
 
-**Shared state (Context):**
+**Background refresh:** after settings/collection load, refresh at most 20 `TO_WATCH`/`WATCHING` items with stale/region-mismatched provider caches, sequential with 250 ms delay, failures logged silently.
 
-| State     | Purpose                 |
-| --------- | ----------------------- |
-| mediaList | Seluruh koleksi         |
-| isLoading | Status loading database |
-| error     | Menyimpan error         |
+## 7. Milestones & Real Status
 
-**Screen-specific state (di `WatchlistScreen`):**
+| Milestone | Task | Priority | Related Requirements | Status |
+| --- | --- | --- | --- | --- |
+| M1 | Project initialization | Must | — | Done |
+| M2 | Install dependencies | Must | NFR-07 | Done |
+| M3 | Folder structure | Must | NFR-08 | Done |
+| M4 | Theme & reusable components | Must | NFR-05 | Done |
+| M5 | Navigation setup | Must | NFR-04 | Done |
+| M6 | SQLite initialization | Must | NFR-02, NFR-03 | Done |
+| M7 | Create & Read | Must | FR-01, FR-02, FR-06 | Done |
+| M8 | Update & Delete | Must | FR-03, FR-04, FR-05 | Done |
+| M9 | Search & Filter | Must | FR-07, FR-08, FR-09 | Done |
+| M10 | Rating functionality | Must | FR-10 | Done |
+| M11 | Statistics | Should | FR-11 | Done |
+| M12 | Sorting | Could | FR-13 | Done |
+| M13 | Testing & bug fixing | Must | All | Done (unit/migration/bundle) |
+| M14 | Database v2 migration | Must | FR-15…FR-18, FR-22, FR-24 | Done |
+| M15 | TMDB service & genre mapping | Must | FR-14, FR-15, FR-17 | Done |
+| M16 | Search-first Add flow | Must | FR-02, FR-14, FR-15, FR-16 | Done |
+| M17 | Posters & genre-themed cards | Must | FR-16, FR-19 | Done |
+| M18 | Home, Watchlist, Detail UX | Must | FR-01, FR-07…FR-09, FR-12, FR-13, FR-17, FR-18, FR-20, FR-21 | Done |
+| M19 | Settings, enrichment, background refresh | Should | FR-22, FR-23 | Done |
+| M20 | Documentation & QA | Must | NFR-08, NFR-10 | Done |
 
-| State          | Purpose               |
-| -------------- | --------------------- |
-| searchQuery    | Input pencarian       |
-| selectedType   | Filter Movie / Series |
-| selectedStatus | Filter viewing status |
-| sortBy         | Sorting preference    |
+### M14–M20 Details
 
-Search, filter, dan sort hanya dipakai di Watchlist, sehingga disimpan sebagai state lokal screen. Hasilnya dihitung dari `mediaList` yang sama dengan yang dipakai Home dan Statistics, agar angka dan daftar tetap konsisten.
+**M14 — Database v2**
 
-### State Architecture
+- `DATABASE_VERSION = 2`.
+- 8 new columns, partial unique index, `app_settings`.
+- Fresh install and v1→v2 produce identical schemas.
+- Settings repository with upsert.
 
-```mermaid
-flowchart TB
-    A[React Screens] --> B[useMedia Hook]
-    B --> C[Media Context]
-    C --> D[useReducer]
-    D --> E[Media State]
-    C --> F[Media Service]
-    F --> G[Media Repository]
-    G --> H[(SQLite Database)]
+**M15 — TMDB & mapping**
+
+- `tmdbClient`: 8 s timeout, one retry, 401/429 mapping, abort support.
+- `tmdbMapper`: genre ID mapping for movie/TV; search/details → form/payload.
+- `providerService`: normalization, primary/secondary provider, link builder, TTL.
+- `streamingProviders`: verified templates; provider IDs from TMDB.
+- 32 Jest tests.
+
+**M16 — Search-first Add**
+
+- Debounced search (400 ms, min 2 chars).
+- Confirm sheet with status/optional rating.
+- Duplicate detection and friendly error.
+- Manual fallback screen and offline banners.
+- Snackbar feedback.
+
+**M17 — Posters & cards**
+
+- `PosterImage`/`PosterPlaceholder`/`BackdropImage`.
+- Four card variants + dispatcher + shared card model.
+- Provider button/logos on cards.
+- Memoization and FlatList tuning.
+
+**M18 — UX**
+
+- Home sections/carousels and empty CTA.
+- Watchlist compact header + FilterSheet + chips + action sheet + rating sheet + undo.
+- Details hero + where-to-watch + synopsis + rating.
+- 44 dp touch targets and accessibility labels.
+
+**M19 — Settings & enrichment**
+
+- Region detection/settings, provider catalog, subscriptions.
+- Enrichment progress/cancel/Needs review.
+- Background provider refresh.
+- Clear image cache and attribution.
+
+**M20 — Docs & QA**
+
+- README + AGENTS + docs 01–15 + CHANGELOG.
+- Lint, tests, doctor, install check, Android export.
+- DB migration verification with `node:sqlite`.
+
+## 8. Git Workflow
+
+Actual v2 commits (oldest → newest):
+
+```text
+feat: database v2 migration and extended media model
+feat: tmdb integration, genre mapping and streaming provider services
+feat: search-first add flow with manual fallback
+feat: poster thumbnails, genre-themed card variants and streaming buttons
+feat: home sections
+feat: watchlist filter sheet and card actions
+feat: media details hero and where-to-watch
+feat: settings screen
+feat: enrich existing titles and background provider refresh
+refactor: remove unused legacy components and backup file
+docs: revise all documents for v2 (tmdb, poster, streaming, genre cards)
 ```
 
-### Important Design Decision
+Rules:
 
-SQLite tetap menjadi sumber penyimpanan permanen. React Context hanya mengelola state yang sedang digunakan aplikasi.
+- `main` stays stable.
+- Each phase/feature has its own commit.
+- Lint/tests/doctor/export run before commits that complete a phase.
+- Commit prefixes: `feat:`, `fix:`, `docs:`, `refactor:`.
 
-**Saat aplikasi dibuka:**
+## 9. Development Principles
 
-1. Database diinisialisasi.
-2. Data diambil dari SQLite.
-3. Data dimasukkan ke application state.
-4. UI menampilkan data.
+1. Implement incrementally; keep the app runnable.
+2. Preserve user data across migrations.
+3. Keep SQL/fetch out of screens/components.
+4. Validate before persistence.
+5. Online features are optional; offline core must never break.
+6. Prefer Expo modules and small local components.
+7. Memoize cards and tune lists.
+8. Document decisions and risks.
 
-**Saat pengguna menambahkan data:**
+## 10. QA / Completion Criteria
 
-1. Form divalidasi.
-2. Service memanggil repository.
-3. Repository menyimpan data ke SQLite.
-4. Context diperbarui setelah penyimpanan berhasil.
-5. UI menampilkan data terbaru.
-
-AsyncStorage tidak digunakan sebagai database tambahan.
-
----
-
-## 7. Database Initialization Strategy
-
-Database harus diinisialisasi sebelum aplikasi menggunakan data.
-
-```mermaid
-flowchart TD
-    A([App Launch]) --> B[SQLiteProvider opens database]
-    B --> C[Create media table if not exists]
-    C --> D[MediaProvider loads all media]
-    D --> E{Load Successful?}
-    E -->|Yes| F[Store data in state]
-    E -->|No| G[Store error in state]
-    F --> H[Render Navigation and Screens]
-    G --> H
-```
-
-Rencana implementasi:
-
-1. Membuka database menggunakan `expo-sqlite`.
-2. Membuat tabel `media` jika belum tersedia (skema di `10-database-design.md`).
-3. Menjalankan konfigurasi database yang diperlukan.
-4. Memuat seluruh data.
-5. Menyediakan data kepada komponen aplikasi.
-
-`SQLiteProvider` dan `useSQLiteContext` dari `expo-sqlite` digunakan untuk mengelola akses database.
-
-### Database Operations
-
-| Function              | SQL Operation |
-| --------------------- | ------------- |
-| getAllMedia()         | SELECT        |
-| getMediaById(id)      | SELECT WHERE  |
-| createMedia(data)     | INSERT        |
-| updateMedia(id, data) | UPDATE        |
-| deleteMedia(id)       | DELETE        |
-
-**Prinsip:** Screen tidak boleh menjalankan SQL query secara langsung. Semua operasi database melewati repository.
-
----
-
-## 8. Development Task Breakdown
-
-Development dibagi menjadi milestone berikut, dengan requirement yang dicakup.
-
-| Milestone | Task                        | Priority | Related Requirement                        |
-| --------- | --------------------------- | -------- | ------------------------------------------ |
-| M1        | Project initialization      | Must     | —                                          |
-| M2        | Install dependencies        | Must     | NFR-07                                     |
-| M3        | Folder structure            | Must     | NFR-08                                     |
-| M4        | Theme & reusable components | Must     | NFR-05                                     |
-| M5        | Navigation setup            | Must     | NFR-04                                     |
-| M6        | SQLite initialization       | Must     | NFR-02, NFR-03                             |
-| M7        | Create & Read               | Must     | FR-01, FR-02, FR-06                        |
-| M8        | Update & Delete             | Must     | FR-03, FR-04, FR-05                        |
-| M9        | Search & Filter             | Must     | FR-07, FR-08, FR-09                        |
-| M10       | Rating functionality        | Must     | FR-10                                      |
-| M11       | Statistics                  | Should   | FR-11                                      |
-| M12       | Sorting                     | Could    | FR-12                                      |
-| M13       | Testing & bug fixing        | Must     | Seluruh FR/NFR (lihat RTM)                 |
-
-### Recommended Development Order
-
-```
-Project Setup
-     |
-     v
-Theme & UI Components
-     |
-     v
-Navigation
-     |
-     v
-SQLite Initialization
-     |
-     v
-Create & Read
-     |
-     v
-Update & Delete
-     |
-     v
-Search & Filter
-     |
-     v
-Rating
-     |
-     v
-Statistics & Sorting
-     |
-     v
-Testing
-```
-
----
-
-## 9. Git & GitHub Workflow
-
-Git digunakan untuk mengontrol perubahan source code.
-
-```
-main
- ├── feature/project-setup
- ├── feature/navigation
- ├── feature/database
- ├── feature/media-crud
- ├── feature/search-filter
- ├── feature/statistics
- └── feature/testing
-```
-
-Aturan:
-
-- `main` berisi versi aplikasi yang stabil.
-- Setiap fitur dikembangkan pada branch terpisah.
-- Perubahan diuji sebelum digabungkan.
-- Commit menggunakan pesan yang jelas.
-
-Contoh commit:
-
-```bash
-git add .
-git commit -m "feat: initialize Expo project"
-git commit -m "feat: implement SQLite database"
-git commit -m "feat: add media CRUD operations"
-git commit -m "fix: validate media form inputs"
-```
-
----
-
-## 10. Milestone Planning
-
-| Milestone | Expected Result                           |
-| --------- | ----------------------------------------- |
-| M1–M3     | Project siap dikembangkan                 |
-| M4–M5     | UI dasar dan navigasi berfungsi           |
-| M6        | SQLite dapat menyimpan dan mengambil data |
-| M7–M8     | CRUD selesai                              |
-| M9–M10    | Search, filter, dan rating berfungsi      |
-| M11–M12   | Fitur tambahan selesai                    |
-| M13       | Aplikasi diuji dan siap dipresentasikan   |
-
-Urutan ini lebih penting daripada target waktu tertentu. Pengembangan tidak dilanjutkan ke fitur berikutnya jika fondasi sebelumnya masih bermasalah.
-
----
-
-## 11. Development Principles
-
-1. Implement features incrementally.
-2. Test each feature before proceeding.
-3. Keep UI and database logic separated.
-4. Use reusable components.
-5. Validate input before database operations.
-6. Preserve data persistence.
-7. Avoid unnecessary dependencies.
-8. Maintain compatibility with Expo Go.
-
----
-
-## 12. Completion Criteria
-
-Implementation planning is complete when:
-
-- Technology stack is finalized.
-- Required dependencies are identified.
-- Project structure is defined.
-- Navigation architecture is established.
-- State management strategy is defined.
-- Database initialization strategy is established.
-- Development milestones are documented.
-- Git workflow is defined.
-
----
+- Lint passes with 0 errors.
+- Jest suite passes.
+- `expo-doctor` passes.
+- `expo install --check` reports up to date.
+- Android production export bundles successfully.
+- DB v1→v2 migration preserves rows.
+- No SQL/fetch in screens/components.
+- All docs 01–15 + README/AGENTS/CHANGELOG are v2.0 and consistent.
 
 **End of Document**
 
 Document ID: CT-IMP-001\
-Version: 1.0\
+Version: 2.0\
 Project: CineTrack
