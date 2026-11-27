@@ -33,6 +33,19 @@
           "cameraPermission": false,
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#141414",
+          "image": "./assets/images/logo-mark.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#141414",
+            "image": "./assets/images/logo-mark.png"
+          }
+        }
       ]
     ],
     "extra": {
