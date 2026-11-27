@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/images/logo-wordmark.png" alt="CineTrack" width="360" />
+</p>
+
 # CineTrack
 
 **Personal Film & Series Tracker — Version 2.0**
@@ -16,6 +20,7 @@ CineTrack is an offline-first mobile app for managing the movies and TV series y
 ## Table of Contents
 
 - [Features](#features)
+- [Branding](#branding)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
 - [Project Structure](#project-structure)
@@ -92,6 +97,27 @@ CineTrack is an offline-first mobile app for managing the movies and TV series y
 - Statistics dashboard (totals, average rating, status and type breakdown)
 - JSON backup/restore
 - Single local user, no account, dark theme
+
+---
+
+## Branding
+
+The CineTrack logo combines a white **play triangle** (watch/entertainment) inside a red **progress ring** (tracking progress through a watchlist). The mark works on its own or with the “CINETRACK” wordmark.
+
+| Element | Value |
+| --- | --- |
+| Background | `#141414` |
+| Primary accent | `#E50914` |
+| Play mark | White |
+| Wordmark | “CINETRACK” |
+
+**Asset locations**
+
+- App icon, adaptive icon layers, monotone icon, favicon: `assets/`
+- Horizontal wordmark and standalone mark: `assets/images/logo-wordmark.png`, `assets/images/logo-mark.png`
+- Editable SVG sources: `assets/branding/` (archive only, not bundled into the app)
+- The native splash screen uses the mark on `#141414` via the `expo-splash-screen` config plugin.
+- In-app branding uses `src/components/BrandLogo.js` on Home (wordmark) and Settings → About (mark).
 
 ---
 
@@ -421,7 +447,7 @@ npx expo export --platform android
 
 | Version | Date | Summary | Reason |
 | --- | --- | --- | --- |
-| 2.0.0 | 2026-11-28 | Search-first add, TMDB metadata/posters/providers, genre-themed cards, Home/Watchlist/Detail redesign, Settings, enrichment, backup v2, full docs revision | Lecturer consultation + UX fixes |
+| 2.0.0 | 2026-11-28 | Search-first add, TMDB metadata/posters/providers, genre-themed cards, Home/Watchlist/Detail redesign, Settings, enrichment, backup v2, branding/logo, full docs revision | Lecturer consultation + UX fixes |
 | 1.0.0 | 2026-11-25 | Initial offline CRUD, search/filter/sort, rating, statistics, backup | Initial release |
 
 ---

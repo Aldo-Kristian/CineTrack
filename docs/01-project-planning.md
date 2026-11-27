@@ -13,7 +13,7 @@ Phase 1 menetapkan fondasi proyek: masalah, tujuan, ruang lingkup, batasan, tekn
 
 | Version | Date | Ringkasan perubahan | Alasan |
 | --- | --- | --- | --- |
-| 2.0 | 2026-11-28 | Menambahkan TMDB dalam scope, poster otomatis, streaming provider, kartu per genre, Settings, enrichment, dan revisi NFR-01 | Hasil konsultasi dosen + perbaikan UX |
+| 2.0 | 2026-11-28 | Menambahkan TMDB dalam scope, poster otomatis, streaming provider, kartu per genre, Settings, enrichment, identitas visual/logo, dan revisi NFR-01 | Hasil konsultasi dosen + perbaikan UX |
 | 1.0 | 2026-11-25 | Dokumen perencanaan awal (offline-only) | Inisialisasi proyek |
 
 ---
@@ -221,6 +221,28 @@ flowchart LR
 ```
 
 Data inti disimpan lokal. TMDB hanya sumber pengayaan; hasilnya dipersist ke SQLite.
+
+---
+
+## 1.7a Identitas Visual
+
+Logo CineTrack adalah **segitiga play putih** di dalam **cincin progres merah** (`#E50914`) pada latar `#141414`.
+
+- **Play** melambangkan tontonan/film dan serial.
+- **Cincin progres** melambangkan tracking status tontonan (To Watch → Watching → Completed).
+- Palet utama: `#141414` (background) dan `#E50914` (aksen utama), dengan play mark putih.
+
+Aset:
+
+| Kebutuhan | Lokasi |
+| --- | --- |
+| App icon | `assets/icon.png` |
+| Android adaptive icon | `assets/android-icon-foreground.png`, `assets/android-icon-background.png`, `assets/android-icon-monochrome.png` |
+| Favicon web | `assets/favicon.png` |
+| Logo dalam aplikasi | `assets/images/logo-mark.png`, `assets/images/logo-wordmark.png` |
+| Arsip SVG sumber (tidak dibundel) | `assets/branding/*.svg` |
+
+Native splash memakai `logo-mark.png` di atas `#141414` melalui plugin `expo-splash-screen`. Branding dalam aplikasi memakai komponen `BrandLogo` (Home: wordmark; Settings/About: mark).
 
 ---
 

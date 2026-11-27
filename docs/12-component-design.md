@@ -11,7 +11,7 @@
 
 | Version | Date | Summary | Reason |
 | --- | --- | --- | --- |
-| 2.0 | 2026-11-28 | Added poster/provider/card/sheet/settings components, genre theme table, updated folder structure and navigation | Lecturer consultation + UX fixes |
+| 2.0 | 2026-11-28 | Added poster/provider/card/sheet/settings components, BrandLogo branding, genre theme table, updated folder structure and navigation | Lecturer consultation + UX fixes |
 | 1.0 | 2026-11-25 | Initial component and folder design | Project setup |
 
 ---
@@ -39,14 +39,14 @@ Bottom tabs are the three primary areas. Add, Manual Add, Details, Edit, Backup,
 
 | Screen | Responsibility | Key dependencies |
 | --- | --- | --- |
-| `HomeScreen` | Status summary, Continue Watching, Up Next, Recently Completed, Settings entry | `PosterCarousel`, `MediaCard`, `EmptyState` |
+| `HomeScreen` | Status summary, Continue Watching, Up Next, Recently Completed, Settings entry | `BrandLogo`, `PosterCarousel`, `MediaCard`, `EmptyState` |
 | `WatchlistScreen` | Collection, search, filter sheet/chips, card actions, rating sheet, undo delete | `SearchBar`, `FilterSheet`, `ActionSheet`, `RatingSheet`, `MediaCard` |
 | `AddMediaScreen` | Search-first TMDB add, duplicate badges, offline banner, manual link | `useTmdbSearch`, `TmdbSearchResultItem`, `ConfirmAddSheet` |
 | `ManualAddScreen` | Offline manual add (title only required) | `MediaForm` |
 | `MediaDetailsScreen` | Hero, rating, status, where to watch, synopsis, edit/delete | `BackdropImage`, `PosterImage`, `ProviderSection`, `RatingSheet` |
 | `EditMediaScreen` | Edit + “Find poster & info automatically” | `MediaForm`, `TmdbSearchSheet` |
 | `StatisticsScreen` | Totals/average/status/type bars | `getStatistics` |
-| `SettingsScreen` | Region, subscriptions, enrichment progress/review, backup, cache, credits | `RegionPicker`, `SubscriptionPicker` |
+| `SettingsScreen` | Region, subscriptions, enrichment progress/review, backup, cache, credits | `RegionPicker`, `SubscriptionPicker`, `BrandLogo` |
 | `BackupScreen` | Export/import JSON backup | `buildBackup`, `parseBackup`, `importBackup` |
 
 ## 3. Component Inventory
@@ -61,6 +61,7 @@ Bottom tabs are the three primary areas. Add, Manual Add, Details, Edit, Backup,
 | `PosterPicker` | Pick a 2:3 image from gallery, copy to documents, preview/remove | `value`, `genre`, `title`, `onChange` |
 | `PosterCarousel` | Horizontal poster list for Home sections | `data`, `onPress`, `emptyLabel` |
 | `GenreIcon` | Maps theme icon names to Lucide components | `name`, `size`, `color`, `strokeWidth` |
+| `BrandLogo` | Official CineTrack mark/wordmark with fixed aspect ratio (see §3.7) | `variant`, `size`, `width`, `style` |
 
 ### 3.2 Cards
 
@@ -128,6 +129,29 @@ All variants show: title, type · year, rating, status, max 2 genre chips, and a
 | `useTmdbSearch` | Cancellable TMDB search state machine |
 | `useSnackbar` | Access snackbar context |
 
+### 3.7 Branding — `BrandLogo`
+
+`BrandLogo` menampilkan aset logo resmi tanpa mengubah rasio. Komponen memakai `Image` dari `expo-image` (sudah terpasang) dan selalu memiliki `accessibilityLabel="CineTrack logo"`.
+
+| Prop | Type | Default | Keterangan |
+| --- | --- | --- | --- |
+| `variant` | `'mark'` \| `'wordmark'` | `'mark'` | `mark` = lambang 1:1; `wordmark` = logo horizontal 1600:480 |
+| `size` | number | `40` (mark) / `36` (wordmark) | Tinggi logo dalam dp; lebar dihitung dari aspect ratio |
+| `width` | number | — | Jika diisi, lebar dipakai dan tinggi dihitung dari aspect ratio |
+| `style` | style | — | Style tambahan (margin/alignment) |
+
+**Aset**
+
+- `assets/images/logo-mark.png` — 256×256, transparan
+- `assets/images/logo-wordmark.png` — 1600×480
+- SVG sumber ada di `assets/branding/` dan **tidak** dibundel ke aplikasi.
+
+**Penggunaan**
+
+- `HomeScreen`: wordmark tinggi 36 dp, rata kiri, sejajar dengan tombol Settings.
+- `SettingsScreen` → About & Credits: mark 48 dp + versi aplikasi.
+- Native splash: mark di atas latar `#141414` melalui plugin `expo-splash-screen` (`imageWidth: 160`).
+
 ## 4. Genre → Theme Table
 
 Primary genre priority: Horror > Sci-Fi > Fantasy > Animation > Romance > Comedy > Thriller > Crime > War > Western > Action > Adventure > Music > Documentary > History > Mystery > Family > Drama.
@@ -175,6 +199,7 @@ src/
 │   ├── ActionSheet.js
 │   ├── ActiveFilterChips.js
 │   ├── BackdropImage.js
+│   ├── BrandLogo.js
 │   ├── CardPieces.js
 │   ├── CardStreaming.js
 │   ├── CollapsibleSection.js

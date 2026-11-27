@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - “In collection” detection and duplicate rejection via unique `(tmdb_id, type)`.
 - Manual add fallback with only Title required and collapsible “More details (optional)”.
 - Custom poster picker (2:3 gallery image, copied into app documents).
+- CineTrack logo, adaptive app icon, monochrome Android icon, splash screen, and in-app `BrandLogo` branding (Home wordmark + Settings/About mark).
 - Genre-themed placeholder (gradient + icon + initials) when no poster exists.
 - Four genre card variants: `cinematic`, `poster`, `vibrant`, `atmospheric`.
 - Provider buttons/logos on cards and grouped where-to-watch on Details.
