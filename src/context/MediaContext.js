@@ -27,6 +27,7 @@ import {
 } from '../services/mediaService';
 import { getSetting, setSetting } from '../database/settingsRepository';
 import { isTmdbConfigured } from '../config/env';
+import { deleteLocalFile } from '../utils/files';
 
 export const MediaContext = createContext(null);
 
@@ -63,6 +64,7 @@ export const MediaProvider = ({ children }) => {
   const [subscriptions, setSubscriptionsState] = useState([]);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const didBackgroundRefresh = useRef(false);
+  const pendingPosterDeletions = useRef(new Map());
 
   const refresh = useCallback(async () => {
     try {
@@ -168,6 +170,17 @@ export const MediaProvider = ({ children }) => {
         const target = items.find((item) => item.id === id) ?? null;
         const deleted = await removeMedia(db, id);
         if (deleted) {
+          // Beri waktu 6 detik untuk Undo sebelum file poster lokal dihapus.
+          if (target?.poster_uri) {
+            const uri = target.poster_uri;
+            const timer = setTimeout(() => {
+              deleteLocalFile(uri);
+              pendingPosterDeletions.current.delete(id);
+            }, 6000);
+
+            pendingPosterDeletions.current.set(id, { timer, uri });
+          }
+
           await refresh();
         }
         return { ok: deleted, media: target };
@@ -182,6 +195,12 @@ export const MediaProvider = ({ children }) => {
   const restore = useCallback(
     async (media) => {
       try {
+        const pending = pendingPosterDeletions.current.get(media.id);
+        if (pending) {
+          clearTimeout(pending.timer);
+          pendingPosterDeletions.current.delete(media.id);
+        }
+
         const restored = await restoreMedia(db, media);
         await refresh();
         return { ok: true, media: restored };
@@ -362,6 +381,14 @@ export const MediaProvider = ({ children }) => {
         console.warn('Background provider refresh failed', error?.message);
       });
   }, [db, isLoading, items, refresh, region, settingsLoaded]);
+
+  useEffect(
+    () => () => {
+      pendingPosterDeletions.current.forEach(({ timer }) => clearTimeout(timer));
+      pendingPosterDeletions.current.clear();
+    },
+    []
+  );
 
   const value = useMemo(
     () => ({

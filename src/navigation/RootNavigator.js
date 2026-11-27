@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import TabNavigator from './TabNavigator';
 import AddMediaScreen from '../screens/AddMediaScreen';
+import ManualAddScreen from '../screens/ManualAddScreen';
 import EditMediaScreen from '../screens/EditMediaScreen';
 import MediaDetailsScreen from '../screens/MediaDetailsScreen';
 import BackupScreen from '../screens/BackupScreen';
@@ -36,19 +37,25 @@ const RootNavigator = () => {
       <Stack.Screen
         name="AddMedia"
         component={AddMediaScreen}
-        options={{ title: 'Add Media' }}
+        options={{ title: 'Add to Collection' }}
+      />
+
+      <Stack.Screen
+        name="ManualAdd"
+        component={ManualAddScreen}
+        options={{ title: 'Add Manually' }}
       />
 
       <Stack.Screen
         name="MediaDetails"
         component={MediaDetailsScreen}
-        options={{ title: 'Media Details' }}
+        options={{ title: 'Details' }}
       />
 
       <Stack.Screen
         name="EditMedia"
         component={EditMediaScreen}
-        options={{ title: 'Edit Media' }}
+        options={{ title: 'Edit Title' }}
       />
 
       <Stack.Screen

@@ -518,7 +518,7 @@ export const getProviderCatalog = async (region) => {
   }
 };
 
-const mergeMappedIntoForm = (form, mapped, overwrite = false) => {
+export const mergeMappedIntoForm = (form, mapped, overwrite = false) => {
   const next = { ...form };
 
   if (mapped.tmdb_id) {

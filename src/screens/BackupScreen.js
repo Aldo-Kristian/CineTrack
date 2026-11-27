@@ -176,7 +176,8 @@ const BackupScreen = () => {
         <Text style={styles.sectionTitle}>Import</Text>
         <Text style={styles.description}>
           Choose a CineTrack backup (.json) file. Existing titles are kept;
-          duplicates (same title, type, and year) are skipped.
+          duplicates (same TMDB id + type, or same title, type, and year) are
+          skipped. Backup v1 files are still supported.
         </Text>
 
         <Pressable style={styles.secondaryButton} onPress={handlePickFile}>

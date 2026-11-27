@@ -10,10 +10,13 @@ import {
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
-import { MEDIA_TYPES, MEDIA_STATUSES } from '../constants/mediaOptions';
+import { MEDIA_TYPES } from '../constants/mediaOptions';
+import CollapsibleSection from './CollapsibleSection';
 import RatingInput from './RatingInput';
 import GenrePicker from './GenrePicker';
 import YearPicker from './YearPicker';
+import StatusSegmented from './StatusSegmented';
+import PosterPicker from './PosterPicker';
 
 const FieldError = ({ message }) =>
   message ? <Text style={styles.errorText}>{message}</Text> : null;
@@ -25,6 +28,7 @@ const MediaForm = ({
   errors = {},
   submitLabel = 'Save',
   isSubmitting = false,
+  defaultExpanded = false,
 }) => {
   const handleChange = (field, value) => {
     onChange({
@@ -45,12 +49,13 @@ const MediaForm = ({
           placeholderTextColor={colors.textMuted}
           selectionColor={colors.primary}
           maxLength={150}
+          accessibilityLabel="Title"
         />
         <FieldError message={errors.title} />
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.label}>Type *</Text>
+        <Text style={styles.label}>Type</Text>
         <View style={styles.options}>
           {MEDIA_TYPES.map((item) => (
             <Pressable
@@ -60,6 +65,9 @@ const MediaForm = ({
                 formData.type === item.value && styles.selectedOption,
               ]}
               onPress={() => handleChange('type', item.value)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: formData.type === item.value }}
+              accessibilityLabel={item.label}
             >
               <Text
                 style={[
@@ -76,79 +84,78 @@ const MediaForm = ({
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.label}>Genre</Text>
-        <GenrePicker
-          value={formData.genre}
-          onChange={(value) => handleChange('genre', value)}
+        <Text style={styles.label}>Viewing Status</Text>
+        <StatusSegmented
+          value={formData.status}
+          onChange={(value) => handleChange('status', value)}
         />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Release Year</Text>
-        <YearPicker
-          value={formData.release_year}
-          onChange={(value) => handleChange('release_year', value)}
-          hasError={Boolean(errors.release_year)}
-        />
-        <FieldError message={errors.release_year} />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Viewing Status *</Text>
-        <View style={styles.options}>
-          {MEDIA_STATUSES.map((item) => (
-            <Pressable
-              key={item.value}
-              style={[
-                styles.option,
-                formData.status === item.value && styles.selectedOption,
-              ]}
-              onPress={() => handleChange('status', item.value)}
-            >
-              <Text
-                style={[
-                  styles.optionText,
-                  formData.status === item.value && styles.selectedOptionText,
-                ]}
-              >
-                {item.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
         <FieldError message={errors.status} />
       </View>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>Personal Rating</Text>
-        <RatingInput
-          value={formData.rating}
-          onChange={(value) => handleChange('rating', value)}
-        />
-        <FieldError message={errors.rating} />
-      </View>
+      <CollapsibleSection
+        title="More details (optional)"
+        subtitle="Genre, year, rating, description, and poster"
+        defaultExpanded={defaultExpanded}
+      >
+        <View style={styles.field}>
+          <Text style={styles.label}>Genre</Text>
+          <GenrePicker
+            value={formData.genre}
+            onChange={(value) => handleChange('genre', value)}
+          />
+        </View>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={formData.description}
-          onChangeText={(value) => handleChange('description', value)}
-          placeholder="Write a short description..."
-          placeholderTextColor={colors.textMuted}
-          selectionColor={colors.primary}
-          multiline
-          textAlignVertical="top"
-        />
-      </View>
+        <View style={styles.field}>
+          <Text style={styles.label}>Release Year</Text>
+          <YearPicker
+            value={formData.release_year}
+            onChange={(value) => handleChange('release_year', value)}
+            hasError={Boolean(errors.release_year)}
+          />
+          <FieldError message={errors.release_year} />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Personal Rating</Text>
+          <RatingInput
+            value={formData.rating}
+            onChange={(value) => handleChange('rating', value)}
+          />
+          <FieldError message={errors.rating} />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={formData.description}
+            onChangeText={(value) => handleChange('description', value)}
+            placeholder="Write a short description..."
+            placeholderTextColor={colors.textMuted}
+            selectionColor={colors.primary}
+            multiline
+            textAlignVertical="top"
+            accessibilityLabel="Description"
+          />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Poster</Text>
+          <PosterPicker
+            value={formData.poster_uri}
+            genre={formData.genre}
+            title={formData.title}
+            onChange={(value) => handleChange('poster_uri', value)}
+          />
+        </View>
+      </CollapsibleSection>
 
       <Pressable
-        style={[
-          styles.submitButton,
-          isSubmitting && styles.disabledButton,
-        ]}
+        style={[styles.submitButton, isSubmitting && styles.disabledButton]}
         onPress={onSubmit}
         disabled={isSubmitting}
+        accessibilityRole="button"
+        accessibilityLabel={submitLabel}
       >
         <Text style={styles.submitButtonText}>
           {isSubmitting ? 'Saving...' : submitLabel}
@@ -184,6 +191,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     color: colors.text,
     fontSize: typography.fontSize.md,
+    minHeight: 50,
   },
 
   inputError: {
@@ -206,8 +214,9 @@ const styles = StyleSheet.create({
   },
 
   option: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
     borderRadius: 6,
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -231,8 +240,9 @@ const styles = StyleSheet.create({
 
   submitButton: {
     backgroundColor: colors.primary,
-    borderRadius: 6,
-    padding: spacing.md,
+    borderRadius: 8,
+    minHeight: 50,
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: spacing.sm,
   },

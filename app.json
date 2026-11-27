@@ -2,7 +2,7 @@
   "expo": {
     "name": "CineTrack",
     "slug": "CineTrack",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -25,7 +25,15 @@
       "expo-sqlite",
       "expo-sharing",
       "expo-image",
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "CineTrack accesses your photos so you can choose a custom poster.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ],
     "extra": {
       "eas": {

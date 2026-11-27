@@ -108,8 +108,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   button: {
-    width: 38,
-    height: 38,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.surfaceSecondary,
