@@ -6,13 +6,32 @@ import {
   deleteMedia,
 } from '../database/mediaRepository';
 import { MEDIA_TYPES, MEDIA_STATUSES } from '../constants/mediaOptions';
+import { parseGenres } from '../constants/genres';
 import {
   validateMediaForm,
   formDataToPayload,
   mediaToFormData,
 } from './validationService';
 
-export const BACKUP_VERSION = 1;
+export const BACKUP_VERSION = 2;
+
+// Field yang portabel antarperangkat. poster_uri adalah path lokal dan
+// providers_* adalah cache jaringan, jadi keduanya tidak diekspor.
+const BACKUP_FIELDS = [
+  'title',
+  'type',
+  'genre',
+  'release_year',
+  'status',
+  'rating',
+  'description',
+  'tmdb_id',
+  'poster_path',
+  'backdrop_path',
+  'tmdb_link',
+  'created_at',
+  'updated_at',
+];
 
 export const loadMedia = (db) => getAllMedia(db);
 
@@ -48,9 +67,13 @@ export const editMedia = async (db, id, formData) => {
 
 export const removeMedia = (db, id) => deleteMedia(db, id);
 
-// Filter murni di memori: query (title/genre), type, status.
-export const filterMedia = (items, { query = '', type = 'ALL', status = 'ALL' }) => {
+// Filter murni di memori: query (title/genre), type, status, genre.
+export const filterMedia = (
+  items,
+  { query = '', type = 'ALL', status = 'ALL', genre = 'ALL' } = {}
+) => {
   const keyword = query.trim().toLowerCase();
+  const genreKey = String(genre ?? 'ALL').toLowerCase();
 
   return items.filter((item) => {
     if (type !== 'ALL' && item.type !== type) {
@@ -58,6 +81,15 @@ export const filterMedia = (items, { query = '', type = 'ALL', status = 'ALL' })
     }
 
     if (status !== 'ALL' && item.status !== status) {
+      return false;
+    }
+
+    if (
+      genreKey !== 'all' &&
+      !parseGenres(item.genre).some(
+        (value) => value.toLowerCase() === genreKey
+      )
+    ) {
       return false;
     }
 
@@ -151,10 +183,18 @@ export const buildBackup = (items) =>
     app: 'cinetrack',
     version: BACKUP_VERSION,
     exported_at: new Date().toISOString(),
-    items: items.map(({ id, ...rest }) => rest),
+    items: items.map((item) => {
+      const picked = {};
+      BACKUP_FIELDS.forEach((field) => {
+        if (item[field] !== undefined) {
+          picked[field] = item[field];
+        }
+      });
+      return picked;
+    }),
   });
 
-// Menerima { items: [...] } maupun array langsung.
+// Menerima { items: [...] } maupun array langsung (backup v1 tetap valid).
 export const parseBackup = (text) => {
   let data;
 
@@ -173,12 +213,18 @@ export const parseBackup = (text) => {
   return { ok: true, items };
 };
 
-const mediaKey = (media) =>
-  `${String(media.title).trim().toLowerCase()}|${media.type}|${
+// Kunci deduplikasi: tmdb_id|type bila ada, selain itu title|type|year.
+const mediaKey = (media) => {
+  if (media.tmdb_id !== null && media.tmdb_id !== undefined) {
+    return `tmdb:${media.tmdb_id}|${media.type}`;
+  }
+
+  return `${String(media.title).trim().toLowerCase()}|${media.type}|${
     media.release_year ?? ''
   }`;
+};
 
-// Data yang sudah ada dipertahankan; duplikat (title+type+year) dilewati.
+// Data yang sudah ada dipertahankan; duplikat dilewati.
 export const importBackup = async (db, text) => {
   const parsed = parseBackup(text);
 

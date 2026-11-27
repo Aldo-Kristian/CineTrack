@@ -51,10 +51,10 @@ const YearPicker = ({ value, onChange, hasError = false }) => {
     return [...startsWith, ...contains];
   }, [years, query]);
 
-  // Pantau keyboard supaya panel tidak tertutup.
+  // Pantau keyboard supaya panel tidak tertutup. Reset dilakukan saat
+  // panel dibuka/ditutup, bukan langsung di dalam effect.
   useEffect(() => {
     if (!visible) {
-      setKeyboardHeight(0);
       return undefined;
     }
 
@@ -73,6 +73,7 @@ const YearPicker = ({ value, onChange, hasError = false }) => {
 
   // Ukur posisi field di layar, lalu buka panel tepat di bawahnya.
   const open = () => {
+    setKeyboardHeight(0);
     setQuery('');
 
     if (fieldRef.current?.measureInWindow) {
@@ -85,7 +86,10 @@ const YearPicker = ({ value, onChange, hasError = false }) => {
     }
   };
 
-  const close = () => setVisible(false);
+  const close = () => {
+    setKeyboardHeight(0);
+    setVisible(false);
+  };
 
   const selectYear = (year) => {
     onChange(year);

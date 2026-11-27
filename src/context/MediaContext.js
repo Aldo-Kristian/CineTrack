@@ -38,8 +38,27 @@ export const MediaProvider = ({ children }) => {
   }, [db]);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    let active = true;
+
+    loadMedia(db)
+      .then((rows) => {
+        if (active) {
+          setItems(rows);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load media', error);
+      })
+      .finally(() => {
+        if (active) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [db]);
 
   const add = useCallback(
     async (formData) => {

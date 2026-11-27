@@ -23,7 +23,9 @@
     },
     "plugins": [
       "expo-sqlite",
-      "expo-sharing"
+      "expo-sharing",
+      "expo-image",
+      "expo-localization"
     ],
     "extra": {
       "eas": {

@@ -23,6 +23,8 @@ const EditMediaScreen = ({ navigation, route }) => {
   // Isi form sekali saja saat data pertama kali tersedia.
   useEffect(() => {
     if (media && formData === null) {
+      // Form awal diisi sekali setelah data media tersedia.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData(mediaToFormData(media));
     }
   }, [media, formData]);

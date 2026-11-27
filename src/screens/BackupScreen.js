@@ -25,7 +25,7 @@ const readPickedFile = async (uri) => {
   try {
     const response = await fetch(uri);
     return await response.text();
-  } catch (fetchError) {
+  } catch {
     return new File(uri).text();
   }
 };

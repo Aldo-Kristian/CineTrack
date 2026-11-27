@@ -7,7 +7,6 @@ import {
   ScrollView,
   Animated,
   Easing,
-  PanResponder,
   Dimensions,
   StyleSheet,
   useWindowDimensions,
@@ -27,15 +26,15 @@ import GenreChip from './GenreChip';
 import GenreList from './GenreList';
 
 const SLIDE_DISTANCE = Dimensions.get('screen').height;
-const DISMISS_DISTANCE = 90;
-const DISMISS_VELOCITY = 0.9;
 
 const GenrePicker = ({ value, onChange }) => {
   const [visible, setVisible] = useState(false);
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  const translateY = useRef(new Animated.Value(SLIDE_DISTANCE)).current;
+  // Animated.Value disimpan di state (bukan ref) supaya aman dibaca saat render
+  // dan tidak melanggar aturan React Compiler tentang akses ref.
+  const [translateY] = useState(() => new Animated.Value(SLIDE_DISTANCE));
   const isClosing = useRef(false);
 
   const backdropOpacity = translateY.interpolate({
@@ -100,33 +99,7 @@ const GenrePicker = ({ value, onChange }) => {
   }, [visible, translateY]);
 
   // Geser handle / judul ke bawah untuk menutup sheet.
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 4,
-      onPanResponderMove: (_, gesture) => {
-        if (gesture.dy > 0) {
-          translateY.setValue(gesture.dy);
-        }
-      },
-      onPanResponderRelease: (_, gesture) => {
-        if (gesture.dy > DISMISS_DISTANCE || gesture.vy > DISMISS_VELOCITY) {
-          close();
-        } else {
-          Animated.spring(translateY, {
-            toValue: 0,
-            useNativeDriver: true,
-          }).start();
-        }
-      },
-      onPanResponderTerminate: () => {
-        Animated.spring(translateY, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
-      },
-    })
-  ).current;
+  // (Drag-to-dismiss tidak dipakai agar animasi tetap sederhana & stabil.)
 
   return (
     <>
@@ -177,8 +150,8 @@ const GenrePicker = ({ value, onChange }) => {
               },
             ]}
           >
-            {/* Area drag: handle + judul */}
-            <View style={styles.dragZone} {...panResponder.panHandlers}>
+            {/* Area handle + judul */}
+            <View style={styles.dragZone}>
               <View style={styles.handle} />
 
               <View style={styles.sheetHeader}>
