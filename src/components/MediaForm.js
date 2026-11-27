@@ -29,6 +29,7 @@ const MediaForm = ({
   submitLabel = 'Save',
   isSubmitting = false,
   defaultExpanded = false,
+  onFieldFocus,
 }) => {
   const handleChange = (field, value) => {
     onChange({
@@ -50,6 +51,7 @@ const MediaForm = ({
           selectionColor={colors.primary}
           maxLength={150}
           accessibilityLabel="Title"
+          onFocus={() => onFieldFocus?.('title')}
         />
         <FieldError message={errors.title} />
       </View>
@@ -136,6 +138,7 @@ const MediaForm = ({
             multiline
             textAlignVertical="top"
             accessibilityLabel="Description"
+            onFocus={() => onFieldFocus?.('description')}
           />
         </View>
 

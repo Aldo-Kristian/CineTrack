@@ -15,6 +15,7 @@ import { Plus } from 'lucide-react-native';
 import colors from '../constants/colors';
 import typography from '../constants/typography';
 import spacing from '../constants/spacing';
+import { MAX_CONTENT_WIDTH } from '../constants/layout';
 import useMedia from '../hooks/useMedia';
 import useTmdbSearch from '../hooks/useTmdbSearch';
 import { useSnackbar } from '../hooks/useSnackbar';
@@ -163,12 +164,13 @@ const AddMediaScreen = ({ navigation }) => {
     <View style={styles.screen}>
       <KeyboardAvoidingView
         style={styles.screen}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
       >
         <FlatList
           data={status === 'success' ? results : []}
           keyExtractor={(item) => `${item.media_type}-${item.id}`}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           contentContainerStyle={[
             styles.content,
             { paddingBottom: spacing['4xl'] + insets.bottom },
@@ -259,6 +261,9 @@ const styles = StyleSheet.create({
   },
 
   content: {
+    width: '100%',
+    maxWidth: MAX_CONTENT_WIDTH,
+    alignSelf: 'center',
     padding: spacing.lg,
   },
 

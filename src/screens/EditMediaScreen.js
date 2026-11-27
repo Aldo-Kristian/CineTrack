@@ -2,14 +2,10 @@ import React, { useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   Alert,
   Pressable,
-  KeyboardAvoidingView,
-  Platform,
   StyleSheet,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Sparkles } from 'lucide-react-native';
 
 import colors from '../constants/colors';
@@ -23,6 +19,7 @@ import { deleteLocalFile } from '../utils/files';
 import MediaForm from '../components/MediaForm';
 import EmptyState from '../components/EmptyState';
 import TmdbSearchSheet from '../components/TmdbSearchSheet';
+import ScreenContainer from '../components/ScreenContainer';
 
 const hasUserDetails = (form) =>
   ['genre', 'release_year', 'description'].some((field) =>
@@ -33,7 +30,6 @@ const EditMediaScreen = ({ navigation, route }) => {
   const { id } = route.params;
   const { items, edit, previewTmdb } = useMedia();
   const { show } = useSnackbar();
-  const insets = useSafeAreaInsets();
   const media = useMemo(() => items.find((item) => item.id === id), [items, id]);
 
   const initialForm = useMemo(
@@ -62,6 +58,17 @@ const EditMediaScreen = ({ navigation, route }) => {
       return remaining;
     });
     setDraft(next);
+  };
+
+  const handleFieldFocus = (field) => {
+    if (field === 'description') {
+      // Tunggu keyboard mulai terbuka agar scrollEnd menghitung viewport baru.
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }, 250);
+    } else {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    }
   };
 
   const handleSubmit = async () => {
@@ -140,18 +147,11 @@ const EditMediaScreen = ({ navigation, route }) => {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        ref={scrollRef}
+    <>
+      <ScreenContainer
+        scrollViewRef={scrollRef}
         style={styles.screen}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: spacing['4xl'] + insets.bottom },
-        ]}
-        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
       >
         <Pressable
           style={[styles.findButton, isFinding && styles.disabled]}
@@ -179,8 +179,9 @@ const EditMediaScreen = ({ navigation, route }) => {
           submitLabel="Save Changes"
           isSubmitting={isSubmitting}
           defaultExpanded
+          onFieldFocus={handleFieldFocus}
         />
-      </ScrollView>
+      </ScreenContainer>
 
       {searchVisible ? (
         <TmdbSearchSheet
@@ -189,7 +190,7 @@ const EditMediaScreen = ({ navigation, route }) => {
           onSelect={applyTmdbResult}
         />
       ) : null}
-    </KeyboardAvoidingView>
+    </>
   );
 };
 
@@ -202,7 +203,6 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    padding: spacing.lg,
     gap: spacing.lg,
   },
 

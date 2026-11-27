@@ -1,25 +1,16 @@
 import React, { useRef, useState } from 'react';
-import {
-  ScrollView,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Alert, StyleSheet } from 'react-native';
 
 import colors from '../constants/colors';
-import spacing from '../constants/spacing';
 import useMedia from '../hooks/useMedia';
 import { useSnackbar } from '../hooks/useSnackbar';
 import { EMPTY_FORM } from '../services/validationService';
 import MediaForm from '../components/MediaForm';
+import ScreenContainer from '../components/ScreenContainer';
 
 const ManualAddScreen = ({ navigation }) => {
   const { add } = useMedia();
   const { show } = useSnackbar();
-  const insets = useSafeAreaInsets();
   const scrollRef = useRef(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
@@ -37,6 +28,17 @@ const ManualAddScreen = ({ navigation }) => {
       return remaining;
     });
     setFormData(next);
+  };
+
+  const handleFieldFocus = (field) => {
+    if (field === 'description') {
+      // Tunggu keyboard mulai terbuka agar scrollEnd menghitung viewport baru.
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }, 250);
+    } else {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    }
   };
 
   const handleSubmit = async () => {
@@ -61,32 +63,18 @@ const ManualAddScreen = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView
-        ref={scrollRef}
-        style={styles.screen}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: spacing['4xl'] + insets.bottom },
-        ]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.intro}>
-          <MediaForm
-            formData={formData}
-            onChange={handleChange}
-            onSubmit={handleSubmit}
-            errors={errors}
-            submitLabel="Add to Collection"
-            isSubmitting={isSubmitting}
-            defaultExpanded={false}
-          />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    <ScreenContainer scrollViewRef={scrollRef} style={styles.screen}>
+      <MediaForm
+        formData={formData}
+        onChange={handleChange}
+        onSubmit={handleSubmit}
+        errors={errors}
+        submitLabel="Add to Collection"
+        isSubmitting={isSubmitting}
+        defaultExpanded={false}
+        onFieldFocus={handleFieldFocus}
+      />
+    </ScreenContainer>
   );
 };
 
@@ -96,13 +84,5 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-
-  content: {
-    padding: spacing.lg,
-  },
-
-  intro: {
-    gap: spacing.lg,
   },
 });
