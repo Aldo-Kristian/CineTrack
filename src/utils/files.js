@@ -15,3 +15,7 @@ export const deleteLocalFile = (uri) => {
     // File bisa sudah dihapus user; tidak perlu mengganggu alur.
   }
 };
+
+
+// Membaca file teks dari URI file:// atau content:// (document picker).
+export const readTextFile = async (uri) => new File(uri).text();

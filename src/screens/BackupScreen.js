@@ -18,17 +18,8 @@ import typography from '../constants/typography';
 import spacing from '../constants/spacing';
 import useMedia from '../hooks/useMedia';
 import { buildBackup, parseBackup } from '../services/mediaService';
+import { readTextFile } from '../utils/files';
 
-// Membaca file hasil pilihan picker. fetch() bisa membaca URI file:// maupun
-// content:// di Android tanpa masalah izin; File.text() jadi cadangan.
-const readPickedFile = async (uri) => {
-  try {
-    const response = await fetch(uri);
-    return await response.text();
-  } catch {
-    return new File(uri).text();
-  }
-};
 const BackupScreen = () => {
   const { items, importItems } = useMedia();
   const insets = useSafeAreaInsets();
@@ -86,7 +77,7 @@ const BackupScreen = () => {
       }
 
       const asset = result.assets[0];
-      const content = await readPickedFile(asset.uri);
+      const content = await readTextFile(asset.uri);
       const parsed = parseBackup(content);
 
       if (!parsed.ok) {
