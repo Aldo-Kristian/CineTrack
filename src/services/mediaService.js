@@ -558,18 +558,18 @@ export const mergeMappedIntoForm = (form, mapped, overwrite = false) => {
   return next;
 };
 
-const loadMappedForCandidate = async (media, candidate, region) => {
+const loadMappedForCandidate = async (media, candidate, region, signal) => {
   const type = media.type;
   const tmdbId = candidate.id ?? candidate.tmdb_id;
 
   try {
-    const details = await getDetails(type, tmdbId);
+    const details = await getDetails(type, tmdbId, { signal });
     let providers = providersFromDetails(details, region);
 
     if (!details?.['watch/providers']) {
       try {
         providers = normalizeProviders(
-          await getWatchProviders(type, tmdbId),
+          await getWatchProviders(type, tmdbId, { signal }),
           region
         );
       } catch {
@@ -628,7 +628,12 @@ export const enrichExistingMedia = async (
       );
 
       if (exact) {
-        const mapped = await loadMappedForCandidate(media, exact, region);
+        const mapped = await loadMappedForCandidate(
+          media,
+          exact,
+          region,
+          signal
+        );
         const nextForm = mergeMappedIntoForm(
           mediaToFormData(media),
           mapped,
