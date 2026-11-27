@@ -182,7 +182,7 @@ const WatchlistScreen = ({ navigation, route }) => {
               icon: <RefreshCw size={18} color={colors.textSecondary} />,
               hasSubmenu: true,
               onPress: () =>
-                setActions((current) => ({ ...current, mode: 'status' })),
+                setActions({ media: actions.media, mode: 'status' }),
             },
             {
               key: 'edit',

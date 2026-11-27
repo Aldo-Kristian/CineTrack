@@ -486,6 +486,13 @@ export const refreshProviderCaches = async (
     } catch (error) {
       failed += 1;
       console.warn('Provider refresh failed', media.id, error?.message);
+
+      // Jangan menghabiskan waktu/quota untuk 20 request jika penyebabnya
+      // bukan masalah per-judul (token, offline, atau rate limit).
+      if (['AUTH', 'OFFLINE', 'RATE_LIMIT'].includes(error?.code)) {
+        failed += targets.length - index - 1;
+        break;
+      }
     }
 
     if (index < targets.length - 1) {
@@ -651,6 +658,10 @@ export const enrichExistingMedia = async (
       }
 
       failed += 1;
+
+      if (['AUTH', 'OFFLINE', 'RATE_LIMIT'].includes(error?.code)) {
+        break;
+      }
     }
 
     if (index < targets.length - 1) {
