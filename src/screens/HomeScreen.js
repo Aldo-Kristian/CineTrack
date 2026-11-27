@@ -21,6 +21,7 @@ import MediaCard from '../components/MediaCard';
 import PosterCarousel from '../components/PosterCarousel';
 import EmptyState from '../components/EmptyState';
 import FloatingAddButton from '../components/FloatingAddButton';
+import BrandLogo from '../components/BrandLogo';
 
 const COMPLETED_LIMIT = 5;
 
@@ -67,14 +68,11 @@ const HomeScreen = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.titleRow}>
           <View style={styles.titleBlock}>
-            <Text
-              style={[
-                styles.heading,
-                { color: colors.primary, letterSpacing: 2 },
-              ]}
-            >
-              CINETRACK
-            </Text>
+            <BrandLogo
+              variant="wordmark"
+              size={36}
+              style={styles.brandLogo}
+            />
             <Text style={styles.subheading}>
               Your personal film & series tracker
             </Text>
@@ -193,10 +191,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  heading: {
-    color: colors.text,
-    fontSize: typography.fontSize['3xl'],
-    fontWeight: typography.fontWeight.bold,
+  brandLogo: {
+    marginTop: 2,
   },
 
   subheading: {

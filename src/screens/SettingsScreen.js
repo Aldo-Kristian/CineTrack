@@ -27,6 +27,7 @@ import useMedia from '../hooks/useMedia';
 import { useSnackbar } from '../hooks/useSnackbar';
 import RegionPicker from '../components/RegionPicker';
 import SubscriptionPicker from '../components/SubscriptionPicker';
+import BrandLogo from '../components/BrandLogo';
 
 const hasUserDetails = (media) =>
   ['genre', 'release_year', 'description'].some((field) =>
@@ -448,6 +449,15 @@ const SettingsScreen = ({ navigation }) => {
 
         <SettingsSection title="About & Credits">
           <View style={styles.aboutBox}>
+            <View style={styles.aboutBrand}>
+              <BrandLogo variant="mark" size={48} />
+
+              <View style={styles.aboutBrandText}>
+                <Text style={styles.aboutName}>CineTrack</Text>
+                <Text style={styles.aboutMuted}>Version {APP_VERSION}</Text>
+              </View>
+            </View>
+
             <Text style={styles.aboutText}>
               This product uses the TMDB API but is not endorsed or certified
               by TMDB.
@@ -456,7 +466,7 @@ const SettingsScreen = ({ navigation }) => {
               Streaming availability data provided by JustWatch.
             </Text>
             <Text style={styles.aboutMuted}>
-              CineTrack {APP_VERSION} · Offline-first collection tracker
+              Offline-first collection tracker
             </Text>
           </View>
         </SettingsSection>
@@ -657,6 +667,23 @@ const styles = StyleSheet.create({
   aboutBox: {
     padding: spacing.lg,
     gap: spacing.md,
+  },
+
+  aboutBrand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+
+  aboutBrandText: {
+    flex: 1,
+    gap: 2,
+  },
+
+  aboutName: {
+    color: colors.text,
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.semibold,
   },
 
   aboutText: {
