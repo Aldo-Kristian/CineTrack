@@ -19,10 +19,13 @@ CineTrack is an offline-first mobile app for managing the movies and TV series y
 
 ## Table of Contents
 
-- [Features](#features)
+- [Showcase / Tampilan Aplikasi](#showcase--tampilan-aplikasi)
+- [Fitur](#fitur)
+- [Fitur Lengkap (Detail)](#fitur-lengkap-detail)
 - [Branding](#branding)
 - [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
+- [Cara Menjalankan](#cara-menjalankan)
+- [Panduan Setup Lengkap](#panduan-setup-lengkap)
 - [Project Structure](#project-structure)
 - [Architecture](#architecture)
 - [Data Model](#data-model)
@@ -36,7 +39,36 @@ CineTrack is an offline-first mobile app for managing the movies and TV series y
 
 ---
 
-## Features
+## Showcase / Tampilan Aplikasi
+
+![CineTrack UI showcase](docs/images/ui-showcase.png)
+
+*Gambar 1. Ringkasan tampilan aplikasi CineTrack.*
+
+Gambar di atas memperlihatkan alur utama aplikasi: halaman utama, pencarian dan penambahan judul, detail tontonan, pengeditan, pengubahan status, serta aksi hapus.
+
+| Layar | Penjelasan singkat |
+| --- | --- |
+| **Halaman utama (Home)** | Menampilkan ringkasan jumlah *To Watch*, *Watching*, dan *Completed*, carousel **Continue Watching**, **Up Next**, **Recently Completed**, serta tombol **+** untuk menambah tontonan dan ikon gear menuju Settings. |
+| **Tambah tontonan** | Layar *Add to Collection* memfokuskan kolom pencarian TMDB. Setelah hasil dipilih, bottom sheet konfirmasi menampilkan poster, tahun, genre, sinopsis, pilihan status, dan rating opsional sebelum disimpan. Ada juga tautan **Can’t find it? Add manually** untuk mode offline. |
+| **Detail tontonan** | Menampilkan poster/backdrop, judul, tipe dan tahun, genre, status, rating, **Where to watch**, sinopsis yang dapat dibuka, informasi tambahan, serta tombol **Edit** dan **Delete**. |
+| **Edit / ubah status** | Form Edit memuat judul, tipe, status, dan bagian **More details (optional)** berisi genre, tahun, rating bintang, deskripsi, serta poster. Status juga dapat diubah langsung dari segmented control di Detail atau menu kartu. |
+| **Hapus tontonan** | Tombol **Delete** selalu menampilkan dialog konfirmasi. Setelah dihapus, muncul snackbar **Undo** selama 5 detik; data dapat dikembalikan dan file poster lokal baru dihapus setelah masa Undo berakhir. |
+
+## Fitur
+
+CineTrack adalah aplikasi **To-Do List daftar tontonan** yang menyimpan data secara lokal di perangkat.
+
+| Operasi | Implementasi di aplikasi |
+| --- | --- |
+| **Create (Tambah)** | Tambah lewat pencarian TMDB (search-first) atau form manual. Hanya **Title** yang wajib pada form manual; tipe default *Movie* dan status default *To Watch*. Metadata seperti poster, genre, tahun, sinopsis, dan provider dapat terisi otomatis dari TMDB. |
+| **Read (Lihat)** | Home menampilkan ringkasan status dan carousel tontonan. Watchlist menampilkan seluruh koleksi dengan pencarian, filter tipe/status/genre, dan sorting. Detail menampilkan informasi lengkap satu judul. |
+| **Update (Edit / Ubah Status)** | Edit membuka form yang sudah terisi. Status dapat diubah dari form, segmented control di Detail, atau menu **Change status** pada kartu. Mengubah status ke **Completed** memunculkan sheet rating yang bisa dilewati. |
+| **Delete (Hapus)** | Delete meminta konfirmasi, menghapus baris dari SQLite, lalu menampilkan snackbar **Undo**. Aksi juga tersedia dari menu `⋯` pada kartu Watchlist. |
+
+Status yang tersedia: **To Watch**, **Watching**, dan **Completed**. Rating pribadi memakai skala **1.0–5.0** dengan langkah 0.5. Fitur pendukung lain: statistik koleksi, backup/restore JSON, pengaturan region dan langganan streaming, serta enrichment data lama. Detail lengkap ada di bagian **Fitur Lengkap (Detail)**.
+
+## Fitur Lengkap (Detail)
 
 **Search-first collection**
 
@@ -137,13 +169,44 @@ The CineTrack logo combines a white **play triangle** (watch/entertainment) insi
 | expo-localization | Default region detection |
 | expo-file-system | Copying/deleting custom poster files |
 | expo-document-picker / expo-sharing | Backup export/import |
+| expo-splash-screen | Native splash screen (logo mark, background `#141414`) |
+| expo-status-bar | Status bar styling |
 | Lucide React Native | Icons |
 | StyleSheet | Styling (no UI kit) |
 | jest-expo + jest | Unit tests for pure functions |
 
 ---
 
-## Getting Started
+## Cara Menjalankan
+
+Prasyarat: Node.js LTS, npm, Git, dan Expo Go di Android (opsional: akun TMDB).
+
+```bash
+npm install                 # pasang dependency
+cp .env.example .env        # opsional; isi EXPO_PUBLIC_TMDB_TOKEN
+npx expo start --clear      # jalankan Metro + Expo Go
+```
+
+Script yang tersedia di `package.json`:
+
+```bash
+npm start                   # sama dengan expo start
+npm run android             # buka di Android
+npm run ios                 # buka di iOS
+npm run web                 # buka versi web
+npm run lint                # ESLint
+npm test                    # Jest
+```
+
+Build APK melalui EAS (profil `preview` menghasilkan APK internal):
+
+```bash
+npx eas-cli@latest build --profile preview --platform android
+```
+
+Token TMDB harus tersedia di environment EAS. Jika tidak ingin memakai fitur online, aplikasi tetap bisa dipakai untuk CRUD manual secara offline.
+
+## Panduan Setup Lengkap
 
 ### Prerequisites
 
@@ -444,6 +507,19 @@ TMDB and JustWatch trademarks belong to their respective owners. The app display
 - Mermaid/document-link validation.
 - No physical Android device or emulator was attached to the development environment. The four bug reports were reproduced from the user’s Android screenshots (3-button navigation, portrait, 720×1600 px).
 - Not yet device-verified: gesture navigation, system font size “Largest”, display size “Largest”, small 360×640 dp screens, tablet/foldable widths, 100+ item scroll performance, and the live keyboard/sheet matrix. These are tracked as TC-027…TC-036 in [`docs/04-requirement-traceability.md`](docs/04-requirement-traceability.md).
+
+## Tautan
+
+- **Desain Figma:** [CineTrack — Figma](https://www.figma.com/design/RnqNxjYUFNRiUCFMjcKQyK/CineTrack?m=auto&t=Rd4cobCvO2tSjig4-1)
+- **Unduh APK & dokumentasi:** [Google Drive — CineTrack](https://drive.google.com/drive/folders/1WtZNzAg6mGBET3QzDshiB2M4Zs5fHiaJ?usp=sharing)
+
+## Pembuat
+
+**Aldo Kristian**  
+NPM **2532015**  
+Program Studi **Teknologi Informasi**  
+**Universitas Internasional Batam**  
+Mata Kuliah **Lab. Pemrograman Mobile**
 
 ## Development Workflow
 
